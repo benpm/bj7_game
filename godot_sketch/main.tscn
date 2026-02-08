@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8ne8l1bhhnfv"]
+
+[sub_resource type="Environment" id="Environment_0xm2m"]
+background_mode = 3
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+environment = SubResource("Environment_0xm2m")
+fov = 49.6
