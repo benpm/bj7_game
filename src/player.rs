@@ -11,7 +11,7 @@ impl Plugin for PlayerPlugin {
         app.add_systems(OnEnter(GameState::Playing), (spawn_player, grab_cursor))
             .add_systems(
                 Update,
-                (fps_mouse_look, fps_movement, fps_gravity)
+                (fps_mouse_look, fps_movement, fps_gravity, escape_to_menu)
                     .chain()
                     .run_if(in_state(GameState::Playing)),
             )
@@ -147,6 +147,15 @@ fn release_cursor(mut cursor_query: Query<&mut CursorOptions, With<PrimaryWindow
     if let Ok(mut cursor) = cursor_query.single_mut() {
         cursor.grab_mode = CursorGrabMode::None;
         cursor.visible = true;
+    }
+}
+
+fn escape_to_menu(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        next_state.set(GameState::Menu);
     }
 }
 

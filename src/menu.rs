@@ -71,6 +71,30 @@ fn setup_menu(mut commands: Commands, textures: Res<TextureAssets>) {
                     },
                     TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                 ));
+            let button_colors = ButtonColors::default();
+            children
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(140.0),
+                        height: Val::Px(50.0),
+                        margin: UiRect::top(Val::Px(10.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..Default::default()
+                    },
+                    BackgroundColor(button_colors.normal),
+                    button_colors,
+                    ExitApp,
+                ))
+                .with_child((
+                    Text::new("Exit"),
+                    TextFont {
+                        font_size: 40.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
+                ));
         });
     commands
         .spawn((
@@ -168,8 +192,12 @@ struct ChangeState(GameState);
 #[derive(Component)]
 struct OpenLink(&'static str);
 
+#[derive(Component)]
+struct ExitApp;
+
 fn click_play_button(
     mut next_state: ResMut<NextState<GameState>>,
+    mut exit: MessageWriter<AppExit>,
     mut interaction_query: Query<
         (
             &Interaction,
@@ -177,15 +205,20 @@ fn click_play_button(
             &ButtonColors,
             Option<&ChangeState>,
             Option<&OpenLink>,
+            Option<&ExitApp>,
         ),
         (Changed<Interaction>, With<Button>),
     >,
 ) {
-    for (interaction, mut color, button_colors, change_state, open_link) in &mut interaction_query {
+    for (interaction, mut color, button_colors, change_state, open_link, exit_app) in
+        &mut interaction_query
+    {
         match *interaction {
             Interaction::Pressed => {
                 if let Some(state) = change_state {
                     next_state.set(state.0.clone());
+                } else if exit_app.is_some() {
+                    exit.write(AppExit::Success);
                 } else if let Some(link) = open_link
                     && let Err(error) = webbrowser::open(link.0)
                 {
