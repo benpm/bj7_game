@@ -50,7 +50,11 @@ State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle se
 - **MenuPlugin** (`menu.rs`) — Main menu UI with Play and Exit buttons. Uses `webbrowser` crate for external links.
 - **ActionsPlugin** (`actions/`) — Input abstraction layer. `Actions` resource holds `player_movement: Option<Vec2>` from WASD/arrows. Game systems read `Actions` instead of polling input directly.
 - **InternalAudioPlugin** (`audio.rs`) — BGM via `bevy_kira_audio` (not Bevy's built-in audio). Loops `flying.ogg`, pauses when player idle.
-- **PlayerPlugin** (`player.rs`) — First-person controller: `FpsController` component with mouse look, WASD movement relative to facing, basic gravity with ground collision. Camera3d spawned as child of player entity. Cursor locked during gameplay, released on exit.
+- **AberrationPlugin** (`aberration.rs`) — Billboard sprite enemies. Spawns quad meshes with aberration textures at scattered positions. Billboard system rotates sprites to face player (Y-axis only). Uses `AlphaMode::Mask`, unlit, double-sided.
+- **HealthPlugin** (`health.rs`) — Health/sanity resource (0.0–1.0) with passive drain. White vignette overlay at `GlobalZIndex(50)` scales with health loss.
+- **EnvironmentPlugin** (`environment.rs`) — `Environment` SubState under `GameState::Playing` (Delirium/Dissociation/Hypervigilance). 60s cycle timer with transition overlay at `GlobalZIndex(60)`. 5-minute run timer.
+- **PalettePlugin** (`palette.rs`) — Post-processing shader via `FullscreenMaterial`. Quantizes rendered output to 3-color palette (black, dark grey, white) based on luminance. Shader at `assets/shaders/palette_quantize.wgsl`.
+- **PlayerPlugin** (`player.rs`) — First-person controller: `FpsController` component with mouse look, WASD movement relative to facing, basic gravity with ground collision. Camera3d spawned as child of player entity with `PaletteQuantize` component. Cursor locked during gameplay, released on exit.
 - **WorldPlugin** (`world.rs`) — 3D scene: ground plane, directional light with shadows, scattered primitive objects. Setup/cleanup tied to Playing state.
 
 ### Key Dependencies
@@ -65,6 +69,7 @@ State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle se
 - `godot_sketch/` — Godot 4.5 subproject for art/prototyping (Aseprite import via AsepriteWizard plugin)
   - Please ignore this directory
 - `assets/audio/`, `assets/textures/` — Game assets
+- `assets/shaders/` — WGSL shaders (palette quantize post-process)
 - `build/` — Platform-specific resources (icons, web styling)
 - `.github/workflows/` — CI (test/lint/fmt) and release pipelines for all platforms
 

@@ -378,6 +378,14 @@ struct TextureAssets {
     bevy: Handle<Image>,
     #[asset(path = "textures/github.png")]
     github: Handle<Image>,
+
+    // Load multiple assets into a Vec<Handle<T>>
+    #[asset(paths(
+        "textures/1_pink_aberration.png",
+        "textures/2_pink_aberration.png",
+        "textures/3_pink_aberration.png",
+    ), collection(typed))]
+    aberrations: Vec<Handle<Image>>,
 }
 
 // Automatically loads during a loading state
@@ -477,6 +485,43 @@ commands
     .with_children(|parent| {
         parent.spawn((Camera3d::default(), Transform::default()));
     });
+```
+
+### Billboard Sprites (2D quads in 3D world)
+
+Render 2D textures as quads that always face the camera. Useful for enemies, particles, vegetation.
+
+```rust
+use rand::Rng;
+
+// Spawn a billboard quad
+let quad = meshes.add(Rectangle::new(2.0, 2.0));
+commands.spawn((
+    Mesh3d(quad),
+    MeshMaterial3d(materials.add(StandardMaterial {
+        base_color_texture: Some(texture),
+        alpha_mode: AlphaMode::Mask(0.5),  // Hard cutoff for transparency
+        unlit: true,                        // No lighting — flat sprite look
+        cull_mode: None,                    // Visible from both sides
+        ..default()
+    })),
+    Transform::from_translation(position),
+    Billboard,  // Custom marker component
+));
+
+// System to rotate billboards toward camera (Y-axis only, stays upright)
+fn billboard_face_camera(
+    camera_query: Query<&GlobalTransform, With<Player>>,
+    mut billboard_query: Query<&mut Transform, With<Billboard>>,
+) {
+    let Ok(camera_global) = camera_query.single() else { return; };
+    let camera_pos = camera_global.translation();
+    for mut transform in &mut billboard_query {
+        let dir = camera_pos - transform.translation;
+        let angle = dir.x.atan2(dir.z);
+        transform.rotation = Quat::from_rotation_y(angle);
+    }
+}
 ```
 
 ## Transforms
@@ -695,6 +740,13 @@ src/
   audio.rs          - Audio plugin (bevy_kira_audio)
   player.rs         - FPS controller (mouse look, WASD movement, gravity, cursor grab)
   world.rs          - 3D scene (ground plane, lighting, objects)
+  aberration.rs     - Billboard sprite enemies (random textures, face camera)
+  health.rs         - Health/sanity resource + vignette overlay
+  environment.rs    - Environment SubState cycling (Delirium/Dissociation/Hypervigilance)
+  palette.rs        - Post-process FullscreenMaterial (3-color palette quantize)
+assets/
+  shaders/
+    palette_quantize.wgsl - Luminance-based 3-color quantization shader
 mobile/
   src/lib.rs        - Mobile platform support
 ```
