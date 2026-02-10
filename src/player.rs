@@ -1,5 +1,6 @@
 use crate::GameState;
 use crate::actions::Actions;
+use crate::actor::{Actor, ActorIntent, GROUND_Y};
 use crate::palette::PaletteQuantize;
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
@@ -12,7 +13,7 @@ impl Plugin for PlayerPlugin {
         app.add_systems(OnEnter(GameState::Playing), (spawn_player, grab_cursor))
             .add_systems(
                 Update,
-                (fps_mouse_look, fps_movement, fps_gravity, escape_to_menu)
+                (player_mouse_look, player_movement_input, escape_to_menu)
                     .chain()
                     .run_if(in_state(GameState::Playing)),
             )
@@ -26,32 +27,8 @@ pub struct Player;
 #[derive(Component)]
 struct FpsCamera;
 
-#[derive(Component)]
-struct FpsController {
-    speed: f32,
-    sensitivity: f32,
-    yaw: f32,
-    pitch: f32,
-    vertical_velocity: f32,
-    grounded: bool,
-}
-
-impl Default for FpsController {
-    fn default() -> Self {
-        Self {
-            speed: 7.0,
-            sensitivity: 0.003,
-            yaw: 0.0,
-            pitch: 0.0,
-            vertical_velocity: 0.0,
-            grounded: true,
-        }
-    }
-}
-
-const GROUND_Y: f32 = 0.0;
 const PLAYER_HEIGHT: f32 = 1.7;
-const GRAVITY: f32 = 9.8;
+const MOUSE_SENSITIVITY: f32 = 0.003;
 const MAX_PITCH: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
 
 fn spawn_player(mut commands: Commands) {
@@ -60,7 +37,14 @@ fn spawn_player(mut commands: Commands) {
             Transform::from_xyz(0.0, GROUND_Y + PLAYER_HEIGHT, 5.0),
             Visibility::default(),
             Player,
-            FpsController::default(),
+            Actor {
+                speed: 7.0,
+                height: PLAYER_HEIGHT,
+                yaw: 0.0,
+                vertical_velocity: 0.0,
+                grounded: true,
+            },
+            ActorIntent::default(),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -72,12 +56,13 @@ fn spawn_player(mut commands: Commands) {
         });
 }
 
-fn fps_mouse_look(
+/// Pitch is stored on the camera child, not on Actor (only player cameras pitch).
+fn player_mouse_look(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    mut player_query: Query<(&mut FpsController, &mut Transform), With<Player>>,
+    mut player_query: Query<&mut Actor, With<Player>>,
     mut camera_query: Query<&mut Transform, (With<FpsCamera>, Without<Player>)>,
 ) {
-    let Ok((mut controller, mut player_transform)) = player_query.single_mut() else {
+    let Ok(mut actor) = player_query.single_mut() else {
         return;
     };
 
@@ -85,61 +70,30 @@ fn fps_mouse_look(
         return;
     }
 
-    controller.yaw -= mouse_motion.delta.x * controller.sensitivity;
-    controller.pitch -= mouse_motion.delta.y * controller.sensitivity;
-    controller.pitch = controller.pitch.clamp(-MAX_PITCH, MAX_PITCH);
+    actor.yaw -= mouse_motion.delta.x * MOUSE_SENSITIVITY;
 
-    player_transform.rotation = Quat::from_rotation_y(controller.yaw);
+    let pitch = if let Ok(cam) = camera_query.single() {
+        let (pitch, _, _) = cam.rotation.to_euler(EulerRot::XYZ);
+        pitch
+    } else {
+        0.0
+    };
+    let new_pitch = (pitch - mouse_motion.delta.y * MOUSE_SENSITIVITY).clamp(-MAX_PITCH, MAX_PITCH);
 
     if let Ok(mut camera_transform) = camera_query.single_mut() {
-        camera_transform.rotation = Quat::from_rotation_x(controller.pitch);
+        camera_transform.rotation = Quat::from_rotation_x(new_pitch);
     }
 }
 
-fn fps_movement(
-    time: Res<Time>,
+fn player_movement_input(
     actions: Res<Actions>,
-    mut query: Query<(&FpsController, &mut Transform), With<Player>>,
+    mut query: Query<&mut ActorIntent, With<Player>>,
 ) {
-    let Some(movement) = actions.player_movement else {
+    let Ok(mut intent) = query.single_mut() else {
         return;
     };
 
-    let Ok((controller, mut transform)) = query.single_mut() else {
-        return;
-    };
-
-    let forward = transform.forward();
-    let right = transform.right();
-
-    // Project onto horizontal plane (ignore y component)
-    let forward_flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
-    let right_flat = Vec3::new(right.x, 0.0, right.z).normalize_or_zero();
-
-    // movement.y = forward/back (W/S maps to Up/Down in Actions)
-    // movement.x = strafe left/right (A/D maps to Left/Right in Actions)
-    let velocity = (forward_flat * movement.y + right_flat * movement.x) * controller.speed;
-
-    transform.translation += velocity * time.delta_secs();
-}
-
-fn fps_gravity(time: Res<Time>, mut query: Query<(&mut FpsController, &mut Transform)>) {
-    for (mut controller, mut transform) in &mut query {
-        if !controller.grounded {
-            controller.vertical_velocity -= GRAVITY * time.delta_secs();
-        }
-
-        transform.translation.y += controller.vertical_velocity * time.delta_secs();
-
-        let ground_level = GROUND_Y + PLAYER_HEIGHT;
-        if transform.translation.y <= ground_level {
-            transform.translation.y = ground_level;
-            controller.vertical_velocity = 0.0;
-            controller.grounded = true;
-        } else {
-            controller.grounded = false;
-        }
-    }
+    intent.move_direction = actions.player_movement.unwrap_or(Vec2::ZERO);
 }
 
 fn grab_cursor(mut cursor_query: Query<&mut CursorOptions, With<PrimaryWindow>>) {

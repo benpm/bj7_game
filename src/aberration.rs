@@ -1,4 +1,5 @@
 use crate::GameState;
+use crate::actor::{Actor, ActorIntent};
 use crate::loading::TextureAssets;
 use crate::player::Player;
 use bevy::prelude::*;
@@ -11,7 +12,7 @@ impl Plugin for AberrationPlugin {
         app.add_systems(OnEnter(GameState::Playing), spawn_aberrations)
             .add_systems(
                 Update,
-                billboard_face_camera.run_if(in_state(GameState::Playing)),
+                aberration_face_player.run_if(in_state(GameState::Playing)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_aberrations);
     }
@@ -20,10 +21,6 @@ impl Plugin for AberrationPlugin {
 /// Marker for aberration enemies.
 #[derive(Component)]
 pub struct Aberration;
-
-/// Marker for entities that should always face the camera (Y-axis only).
-#[derive(Component)]
-struct Billboard;
 
 fn spawn_aberrations(
     mut commands: Commands,
@@ -34,7 +31,6 @@ fn spawn_aberrations(
     let mut rng = rand::rng();
     let quad = meshes.add(Rectangle::new(2.0, 2.0));
 
-    // Spawn several aberrations at scattered positions
     let positions = [
         Vec3::new(4.0, 1.0, -6.0),
         Vec3::new(-6.0, 1.0, -3.0),
@@ -59,25 +55,30 @@ fn spawn_aberrations(
             })),
             Transform::from_translation(*pos),
             Aberration,
-            Billboard,
+            Actor {
+                speed: 0.0,
+                height: 1.0,
+                yaw: 0.0,
+                vertical_velocity: 0.0,
+                grounded: true,
+            },
+            ActorIntent::default(),
         ));
     }
 }
 
-fn billboard_face_camera(
-    camera_query: Query<&GlobalTransform, With<Player>>,
-    mut billboard_query: Query<&mut Transform, With<Billboard>>,
+fn aberration_face_player(
+    player_query: Query<&GlobalTransform, With<Player>>,
+    mut aberration_query: Query<(&mut Actor, &Transform), With<Aberration>>,
 ) {
-    let Ok(camera_global) = camera_query.single() else {
+    let Ok(player_global) = player_query.single() else {
         return;
     };
-    let camera_pos = camera_global.translation();
+    let player_pos = player_global.translation();
 
-    for mut transform in &mut billboard_query {
-        // Only rotate around Y axis to stay upright
-        let dir = camera_pos - transform.translation;
-        let angle = dir.x.atan2(dir.z);
-        transform.rotation = Quat::from_rotation_y(angle);
+    for (mut actor, transform) in &mut aberration_query {
+        let dir = player_pos - transform.translation;
+        actor.yaw = dir.x.atan2(dir.z);
     }
 }
 
