@@ -6,6 +6,7 @@ mod environment;
 mod health;
 mod loading;
 mod menu;
+mod palette;
 mod player;
 mod world;
 
@@ -15,6 +16,7 @@ use crate::environment::EnvironmentPlugin;
 use crate::health::HealthPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
+use crate::palette::PalettePlugin;
 use crate::player::PlayerPlugin;
 use crate::world::WorldPlugin;
 
@@ -42,6 +44,7 @@ impl Plugin for GamePlugin {
             InternalAudioPlugin,
             HealthPlugin,
             EnvironmentPlugin,
+            PalettePlugin,
             PlayerPlugin,
             WorldPlugin,
         ));

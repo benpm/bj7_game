@@ -1,5 +1,6 @@
 use crate::GameState;
 use crate::actions::Actions;
+use crate::palette::PaletteQuantize;
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
@@ -62,7 +63,12 @@ fn spawn_player(mut commands: Commands) {
             FpsController::default(),
         ))
         .with_children(|parent| {
-            parent.spawn((Camera3d::default(), Transform::default(), FpsCamera));
+            parent.spawn((
+                Camera3d::default(),
+                Transform::default(),
+                FpsCamera,
+                PaletteQuantize::default(),
+            ));
         });
 }
 
