@@ -7,7 +7,7 @@ edition = "2024"
 exclude = ["dist", "build", "assets", "credits"]
 
 [workspace]
-members = ["mobile"]
+members = []
 
 [profile.dev.package."*"]
 opt-level = 3

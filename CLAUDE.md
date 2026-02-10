@@ -63,6 +63,7 @@ State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle se
 - `src/` — Rust game code
 - `mobile/` — Mobile platform crate (`staticlib`/`cdylib`), Android manifest, iOS Xcode project
 - `godot_sketch/` — Godot 4.5 subproject for art/prototyping (Aseprite import via AsepriteWizard plugin)
+  - Please ignore this directory
 - `assets/audio/`, `assets/textures/` — Game assets
 - `build/` — Platform-specific resources (icons, web styling)
 - `.github/workflows/` — CI (test/lint/fmt) and release pipelines for all platforms
