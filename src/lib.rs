@@ -1,5 +1,6 @@
 #![allow(clippy::type_complexity)]
 
+mod aberration;
 mod actions;
 mod audio;
 mod environment;
@@ -10,6 +11,7 @@ mod palette;
 mod player;
 mod world;
 
+use crate::aberration::AberrationPlugin;
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
 use crate::environment::EnvironmentPlugin;
@@ -42,6 +44,7 @@ impl Plugin for GamePlugin {
             MenuPlugin,
             ActionsPlugin,
             InternalAudioPlugin,
+            AberrationPlugin,
             HealthPlugin,
             EnvironmentPlugin,
             PalettePlugin,
