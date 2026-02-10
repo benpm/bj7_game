@@ -38,19 +38,20 @@ This is a Bevy 0.18 game built on the [bevy_game_template](https://github.com/Ni
 
 ### Game State Machine
 
-`GameState::Loading` → `GameState::Menu` → `GameState::Playing`
+`GameState::Loading` → `GameState::Menu` ↔ `GameState::Playing`
 
-State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle setup/teardown per state.
+State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle setup/teardown per state. Escape key returns from Playing to Menu.
 
 ### Plugin Structure (src/lib.rs)
 
 `GamePlugin` composes all subsystems as sub-plugins:
 
 - **LoadingPlugin** (`loading.rs`) — Declarative asset loading via `bevy_asset_loader`. Defines `AudioAssets` and `TextureAssets` as `AssetCollection` resources. Transitions to Menu when done.
-- **MenuPlugin** (`menu.rs`) — Main menu UI with Play button. Uses `webbrowser` crate for external links.
-- **ActionsPlugin** (`actions/`) — Input abstraction layer. `Actions` resource holds `player_movement: Option<Vec2>`. Supports keyboard (WASD/arrows) and touch input. Game systems read `Actions` instead of polling input directly.
+- **MenuPlugin** (`menu.rs`) — Main menu UI with Play and Exit buttons. Uses `webbrowser` crate for external links.
+- **ActionsPlugin** (`actions/`) — Input abstraction layer. `Actions` resource holds `player_movement: Option<Vec2>` from WASD/arrows. Game systems read `Actions` instead of polling input directly.
 - **InternalAudioPlugin** (`audio.rs`) — BGM via `bevy_kira_audio` (not Bevy's built-in audio). Loops `flying.ogg`, pauses when player idle.
-- **PlayerPlugin** (`player.rs`) — Player entity with `Player` marker component. Movement at 150 units/sec scaled by delta time.
+- **PlayerPlugin** (`player.rs`) — First-person controller: `FpsController` component with mouse look, WASD movement relative to facing, basic gravity with ground collision. Camera3d spawned as child of player entity. Cursor locked during gameplay, released on exit.
+- **WorldPlugin** (`world.rs`) — 3D scene: ground plane, directional light with shadows, scattered primitive objects. Setup/cleanup tied to Playing state.
 
 ### Key Dependencies
 

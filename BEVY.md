@@ -320,6 +320,7 @@ fn mouse_button(input: Res<ButtonInput<MouseButton>>) {
 }
 
 // Mouse motion (accumulated per frame)
+// NOTE: Not in bevy::prelude — requires `use bevy::input::mouse::AccumulatedMouseMotion;`
 fn mouse_look(motion: Res<AccumulatedMouseMotion>) {
     if motion.delta != Vec2::ZERO {
         let dx = motion.delta.x;
@@ -328,6 +329,7 @@ fn mouse_look(motion: Res<AccumulatedMouseMotion>) {
 }
 
 // Mouse scroll
+// NOTE: Not in bevy::prelude — requires `use bevy::input::mouse::AccumulatedMouseScroll;`
 fn zoom(scroll: Res<AccumulatedMouseScroll>) {
     let zoom_delta = scroll.delta.y;
 }
@@ -424,25 +426,57 @@ fn setup_3d(
         Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
-    // Light
+    // Point light
     commands.spawn((
         PointLight { shadows_enabled: true, ..default() },
         Transform::from_xyz(4.0, 8.0, 4.0),
     ));
 
-    // Mesh
+    // Directional light (sun) — illuminance ~10000.0 for outdoor scenes
+    commands.spawn((
+        DirectionalLight {
+            illuminance: 10000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -0.8, 0.4, 0.0)),
+    ));
+
+    // Mesh with StandardMaterial
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.8, 0.2, 0.2),
+            perceptual_roughness: 0.9,
+            ..default()
+        })),
         Transform::from_xyz(0.0, 0.5, 0.0),
     ));
 
     // Ground plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(5.0, 5.0))),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
     ));
+
+    // Other 3D primitives: Sphere::new(radius), Cylinder::new(radius, height)
 }
+```
+
+### Parent Entity with Camera3d Child
+
+When spawning a Camera3d as a child of a parent entity (e.g. for FPS controller), the parent needs `Visibility::default()` and `Transform`:
+
+```rust
+commands
+    .spawn((
+        Transform::from_xyz(0.0, 1.7, 0.0),
+        Visibility::default(),
+        Player,
+    ))
+    .with_children(|parent| {
+        parent.spawn((Camera3d::default(), Transform::default()));
+    });
 ```
 
 ## Transforms
@@ -582,6 +616,30 @@ fn play_sfx(audio: Res<Audio>, asset_server: Res<AssetServer>) {
 }
 ```
 
+## Cursor & Window
+
+In Bevy 0.18, `CursorOptions` is a **separate ECS component** on the window entity (not a field on `Window`). Query it directly:
+
+```rust
+use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
+
+fn grab_cursor(mut cursor_query: Query<&mut CursorOptions, With<PrimaryWindow>>) {
+    if let Ok(mut cursor) = cursor_query.single_mut() {
+        cursor.grab_mode = CursorGrabMode::Locked;  // or Confined, None
+        cursor.visible = false;
+    }
+}
+```
+
+## App Exit
+
+```rust
+// Quit the application using MessageWriter
+fn exit_game(mut exit: MessageWriter<AppExit>) {
+    exit.write(AppExit::Success);
+}
+```
+
 ## Bevy 0.18 Notable Features
 
 - **BSN (`bsn!` macro)**: New scene/UI composition system with Rust-native syntax, IDE support (go-to-def, autocomplete), and template inheritance. File-based `.bsn` asset loader planned for a later release.
@@ -630,14 +688,15 @@ src/
   main.rs           - Entry point, DefaultPlugins + window config
   lib.rs            - GamePlugin, GameState enum (Loading/Menu/Playing)
   loading.rs        - Asset loading with bevy_asset_loader
-  menu.rs           - Main menu UI
+  menu.rs           - Main menu UI (Play/Exit buttons)
   actions/
-    mod.rs          - Input actions system
+    mod.rs          - WASD input → Actions resource
     game_control.rs - Keyboard control definitions
   audio.rs          - Audio plugin (bevy_kira_audio)
-  player.rs         - Player entity and movement
+  player.rs         - FPS controller (mouse look, WASD movement, gravity, cursor grab)
+  world.rs          - 3D scene (ground plane, lighting, objects)
 mobile/
   src/lib.rs        - Mobile platform support
 ```
 
-**State flow**: `Loading` (assets) -> `Menu` (play button) -> `Playing` (gameplay)
+**State flow**: `Loading` (assets) -> `Menu` (Play/Exit) -> `Playing` (Escape returns to Menu)

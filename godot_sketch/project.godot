@@ -8,6 +8,11 @@
 
 config_version=5
 
+[addons]
+
+curved_lines_2d/add_stroke_enabled=false
+curved_lines_2d/snap_to_pixel=true
+
 [application]
 
 config/name="godot_sketch"
