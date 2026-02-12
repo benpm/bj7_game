@@ -2,6 +2,7 @@ use crate::GameState;
 use crate::actor::{Actor, ActorIntent};
 use crate::loading::TextureAssets;
 use crate::player::Player;
+use rand::random_range;
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -31,14 +32,15 @@ fn spawn_aberrations(
     let mut rng = rand::rng();
     let quad = meshes.add(Rectangle::new(2.0, 2.0));
 
-    let positions = [
-        Vec3::new(4.0, 1.0, -6.0),
-        Vec3::new(-6.0, 1.0, -3.0),
-        Vec3::new(2.0, 1.0, -12.0),
-        Vec3::new(-3.0, 1.0, -9.0),
-        Vec3::new(8.0, 1.0, -8.0),
-        Vec3::new(-8.0, 1.0, -14.0),
-    ];
+    let positions = {
+        let mut positions = Vec::new();
+        for _ in 0..10 {
+            let x = random_range(-20.0..20.0);
+            let z = random_range(-20.0..20.0);
+            positions.push(Vec3::new(x, 0.0, z));
+        }
+        positions
+    };
 
     for pos in &positions {
         let texture_index = rng.random_range(0..textures.aberrations.len());

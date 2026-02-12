@@ -28,7 +28,7 @@ pub struct Player;
 struct FpsCamera;
 
 const PLAYER_HEIGHT: f32 = 1.7;
-const MOUSE_SENSITIVITY: f32 = 0.003;
+const MOUSE_SENSITIVITY: f32 = 0.001;
 const MAX_PITCH: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
 
 fn spawn_player(mut commands: Commands) {
