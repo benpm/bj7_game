@@ -23,7 +23,7 @@ impl Plugin for PausePlugin {
 pub struct Paused(pub bool);
 
 pub fn game_not_paused(paused: Option<Res<Paused>>) -> bool {
-    paused.map_or(true, |p| !p.0)
+    paused.is_none_or(|p| !p.0)
 }
 
 #[derive(Component)]
@@ -208,10 +208,7 @@ fn handle_pause_buttons(
     }
 }
 
-fn cleanup_pause(
-    mut commands: Commands,
-    menu_query: Query<Entity, With<PauseMenu>>,
-) {
+fn cleanup_pause(mut commands: Commands, menu_query: Query<Entity, With<PauseMenu>>) {
     commands.remove_resource::<Paused>();
     for entity in &menu_query {
         commands.entity(entity).despawn();

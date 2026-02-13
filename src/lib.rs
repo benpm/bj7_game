@@ -1,8 +1,8 @@
 #![allow(clippy::type_complexity)]
 
 mod aberration;
-pub mod actor;
 mod actions;
+pub mod actor;
 mod environment;
 mod health;
 mod loading;
@@ -13,8 +13,8 @@ mod player;
 mod world;
 
 use crate::aberration::AberrationPlugin;
-use crate::actor::ActorPlugin;
 use crate::actions::ActionsPlugin;
+use crate::actor::ActorPlugin;
 use crate::environment::EnvironmentPlugin;
 use crate::health::HealthPlugin;
 use crate::loading::LoadingPlugin;

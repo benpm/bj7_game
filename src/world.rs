@@ -42,14 +42,46 @@ fn setup_world(
 
     // Scattered objects
     let objects: &[(Mesh, Vec3, Color)] = &[
-        (Cuboid::new(1.0, 1.0, 1.0).into(), Vec3::new(3.0, 0.5, -2.0), Color::srgb(0.8, 0.2, 0.2)),
-        (Cuboid::new(2.0, 2.0, 2.0).into(), Vec3::new(-5.0, 1.0, -8.0), Color::srgb(0.2, 0.3, 0.8)),
-        (Cuboid::new(1.5, 0.5, 1.5).into(), Vec3::new(7.0, 0.25, -5.0), Color::srgb(0.9, 0.6, 0.1)),
-        (Sphere::new(0.75).into(), Vec3::new(-3.0, 0.75, -4.0), Color::srgb(0.9, 0.9, 0.2)),
-        (Sphere::new(1.2).into(), Vec3::new(5.0, 1.2, -10.0), Color::srgb(0.3, 0.8, 0.3)),
-        (Cylinder::new(0.5, 2.0).into(), Vec3::new(-7.0, 1.0, -3.0), Color::srgb(0.7, 0.2, 0.7)),
-        (Cylinder::new(0.8, 3.0).into(), Vec3::new(0.0, 1.5, -12.0), Color::srgb(0.2, 0.7, 0.7)),
-        (Cuboid::new(0.8, 3.0, 0.8).into(), Vec3::new(-2.0, 1.5, -15.0), Color::srgb(0.6, 0.4, 0.2)),
+        (
+            Cuboid::new(1.0, 1.0, 1.0).into(),
+            Vec3::new(3.0, 0.5, -2.0),
+            Color::srgb(0.8, 0.2, 0.2),
+        ),
+        (
+            Cuboid::new(2.0, 2.0, 2.0).into(),
+            Vec3::new(-5.0, 1.0, -8.0),
+            Color::srgb(0.2, 0.3, 0.8),
+        ),
+        (
+            Cuboid::new(1.5, 0.5, 1.5).into(),
+            Vec3::new(7.0, 0.25, -5.0),
+            Color::srgb(0.9, 0.6, 0.1),
+        ),
+        (
+            Sphere::new(0.75).into(),
+            Vec3::new(-3.0, 0.75, -4.0),
+            Color::srgb(0.9, 0.9, 0.2),
+        ),
+        (
+            Sphere::new(1.2).into(),
+            Vec3::new(5.0, 1.2, -10.0),
+            Color::srgb(0.3, 0.8, 0.3),
+        ),
+        (
+            Cylinder::new(0.5, 2.0).into(),
+            Vec3::new(-7.0, 1.0, -3.0),
+            Color::srgb(0.7, 0.2, 0.7),
+        ),
+        (
+            Cylinder::new(0.8, 3.0).into(),
+            Vec3::new(0.0, 1.5, -12.0),
+            Color::srgb(0.2, 0.7, 0.7),
+        ),
+        (
+            Cuboid::new(0.8, 3.0, 0.8).into(),
+            Vec3::new(-2.0, 1.5, -15.0),
+            Color::srgb(0.6, 0.4, 0.2),
+        ),
     ];
 
     for (mesh, position, color) in objects {

@@ -1,5 +1,5 @@
-use bevy::core_pipeline::core_3d::graph::{Core3d, Node3d};
 use bevy::core_pipeline::FullscreenShader;
+use bevy::core_pipeline::core_3d::graph::{Core3d, Node3d};
 use bevy::ecs::query::QueryItem;
 use bevy::image::BevyDefault;
 use bevy::prelude::*;
@@ -12,12 +12,12 @@ use bevy::render::render_graph::{
     NodeRunError, RenderGraphContext, RenderGraphExt, RenderLabel, ViewNode, ViewNodeRunner,
 };
 use bevy::render::render_resource::{
-    binding_types::{sampler, texture_2d, uniform_buffer},
     AddressMode, BindGroupEntries, BindGroupLayoutDescriptor, BindGroupLayoutEntries,
     CachedRenderPipelineId, ColorTargetState, ColorWrites, FilterMode, FragmentState, Operations,
     PipelineCache, RenderPassColorAttachment, RenderPassDescriptor, RenderPipelineDescriptor,
     Sampler, SamplerBindingType, SamplerDescriptor, ShaderStages, ShaderType, TextureFormat,
     TextureSampleType,
+    binding_types::{sampler, texture_2d, uniform_buffer},
 };
 use bevy::render::renderer::{RenderContext, RenderDevice};
 use bevy::render::texture::GpuImage;
@@ -191,7 +191,10 @@ fn init_palette_pipeline(
 struct PaletteSqueezeNode;
 
 impl ViewNode for PaletteSqueezeNode {
-    type ViewQuery = (&'static ViewTarget, &'static DynamicUniformIndex<PaletteSqueeze>);
+    type ViewQuery = (
+        &'static ViewTarget,
+        &'static DynamicUniformIndex<PaletteSqueeze>,
+    );
 
     fn run<'w>(
         &self,

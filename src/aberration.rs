@@ -22,7 +22,11 @@ impl Plugin for AberrationPlugin {
         app.add_systems(OnEnter(GameState::Playing), init_spawn_timer)
             .add_systems(
                 Update,
-                (spawn_aberration_periodic, aberration_face_player, animate_spawn)
+                (
+                    spawn_aberration_periodic,
+                    aberration_face_player,
+                    animate_spawn,
+                )
                     .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_aberrations);
@@ -164,10 +168,7 @@ fn animate_spawn(
     }
 }
 
-fn cleanup_aberrations(
-    mut commands: Commands,
-    query: Query<Entity, With<Aberration>>,
-) {
+fn cleanup_aberrations(mut commands: Commands, query: Query<Entity, With<Aberration>>) {
     for entity in &query {
         commands.entity(entity).despawn();
     }

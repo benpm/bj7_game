@@ -162,10 +162,7 @@ fn update_label(
     }
 }
 
-fn cleanup_environment(
-    mut commands: Commands,
-    label_query: Query<Entity, With<EnvironmentLabel>>,
-) {
+fn cleanup_environment(mut commands: Commands, label_query: Query<Entity, With<EnvironmentLabel>>) {
     commands.remove_resource::<RunTimer>();
     commands.remove_resource::<CycleTimer>();
     commands.remove_resource::<PaletteDarken>();

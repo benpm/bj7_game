@@ -42,10 +42,7 @@ fn actor_apply_yaw(mut query: Query<(&Actor, &mut Transform)>) {
     }
 }
 
-fn actor_movement(
-    time: Res<Time>,
-    mut query: Query<(&Actor, &ActorIntent, &mut Transform)>,
-) {
+fn actor_movement(time: Res<Time>, mut query: Query<(&Actor, &ActorIntent, &mut Transform)>) {
     for (actor, intent, mut transform) in &mut query {
         if intent.move_direction == Vec2::ZERO {
             continue;

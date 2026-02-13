@@ -33,7 +33,11 @@ impl Default for ButtonColors {
 #[derive(Component)]
 struct Menu;
 
-fn setup_menu(mut commands: Commands, textures: Res<TextureAssets>, asset_server: Res<AssetServer>) {
+fn setup_menu(
+    mut commands: Commands,
+    textures: Res<TextureAssets>,
+    asset_server: Res<AssetServer>,
+) {
     info!("menu");
     commands.spawn((Camera2d, Msaa::Off, Menu));
 

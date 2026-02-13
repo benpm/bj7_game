@@ -90,10 +90,7 @@ fn player_mouse_look(
     }
 }
 
-fn player_movement_input(
-    actions: Res<Actions>,
-    mut query: Query<&mut ActorIntent, With<Player>>,
-) {
+fn player_movement_input(actions: Res<Actions>, mut query: Query<&mut ActorIntent, With<Player>>) {
     let Ok(mut intent) = query.single_mut() else {
         return;
     };

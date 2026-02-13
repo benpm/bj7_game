@@ -90,10 +90,7 @@ fn update_vignette(
     }
 }
 
-fn cleanup_health(
-    mut commands: Commands,
-    query: Query<Entity, With<HealthVignette>>,
-) {
+fn cleanup_health(mut commands: Commands, query: Query<Entity, With<HealthVignette>>) {
     commands.remove_resource::<Health>();
     for entity in &query {
         commands.entity(entity).despawn();
