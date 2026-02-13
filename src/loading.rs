@@ -13,7 +13,6 @@ impl Plugin for LoadingPlugin {
         app.add_loading_state(
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Menu)
-                .load_collection::<AudioAssets>()
                 .load_collection::<TextureAssets>(),
         );
     }

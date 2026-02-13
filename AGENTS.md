@@ -46,10 +46,8 @@ State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle se
 
 `GamePlugin` composes all subsystems as sub-plugins:
 
-- **LoadingPlugin** (`loading.rs`) — Declarative asset loading via `bevy_asset_loader`. Defines `AudioAssets` and `TextureAssets` as `AssetCollection` resources. Transitions to Menu when done.
 - **MenuPlugin** (`menu.rs`) — Main menu UI with Play and Exit buttons. Uses `webbrowser` crate for external links.
 - **ActionsPlugin** (`actions/`) — Input abstraction layer. `Actions` resource holds `player_movement: Option<Vec2>` from WASD/arrows. Game systems read `Actions` instead of polling input directly.
-- **InternalAudioPlugin** (`audio.rs`) — BGM via `bevy_kira_audio` (not Bevy's built-in audio). Loops `flying.ogg`, pauses when player idle.
 - **AberrationPlugin** (`aberration.rs`) — Billboard sprite enemies. Spawns quad meshes with aberration textures at scattered positions. Billboard system rotates sprites to face player (Y-axis only). Uses `AlphaMode::Mask`, unlit, double-sided.
 - **HealthPlugin** (`health.rs`) — Health/sanity resource (0.0–1.0) with passive drain. White vignette overlay at `GlobalZIndex(50)` scales with health loss.
 - **EnvironmentPlugin** (`environment.rs`) — `Environment` SubState under `GameState::Playing` (Delirium/Dissociation/Hypervigilance). 60s cycle timer with transition overlay at `GlobalZIndex(60)`. 5-minute run timer.

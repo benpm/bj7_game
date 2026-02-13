@@ -13,7 +13,8 @@ impl Plugin for AberrationPlugin {
         app.add_systems(OnEnter(GameState::Playing), spawn_aberrations)
             .add_systems(
                 Update,
-                aberration_face_player.run_if(in_state(GameState::Playing)),
+                (aberration_face_player, animate_spawn)
+                    .run_if(in_state(GameState::Playing)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_aberrations);
     }
@@ -22,6 +23,12 @@ impl Plugin for AberrationPlugin {
 /// Marker for aberration enemies.
 #[derive(Component)]
 pub struct Aberration;
+
+/// Tracks the spawn-in scale animation.
+#[derive(Component)]
+struct SpawnAnimation {
+    timer: Timer,
+}
 
 fn spawn_aberrations(
     mut commands: Commands,
@@ -55,8 +62,11 @@ fn spawn_aberrations(
                 cull_mode: None,
                 ..default()
             })),
-            Transform::from_translation(*pos),
+            Transform::from_translation(*pos).with_scale(Vec3::new(0.0, 1.0, 1.0)),
             Aberration,
+            SpawnAnimation {
+                timer: Timer::from_seconds(0.5, TimerMode::Once),
+            },
             Actor {
                 speed: 0.0,
                 height: 1.0,
@@ -81,6 +91,22 @@ fn aberration_face_player(
     for (mut actor, transform) in &mut aberration_query {
         let dir = player_pos - transform.translation;
         actor.yaw = dir.x.atan2(dir.z);
+    }
+}
+
+fn animate_spawn(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Transform, &mut SpawnAnimation)>,
+) {
+    for (entity, mut transform, mut anim) in &mut query {
+        anim.timer.tick(time.delta());
+        let t = anim.timer.fraction();
+        transform.scale.x = t;
+        if t >= 1.0 {
+            transform.scale.x = 1.0;
+            commands.entity(entity).remove::<SpawnAnimation>();
+        }
     }
 }
 

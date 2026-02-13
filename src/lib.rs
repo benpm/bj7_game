@@ -3,7 +3,6 @@
 mod aberration;
 pub mod actor;
 mod actions;
-mod audio;
 mod environment;
 mod health;
 mod loading;
@@ -15,7 +14,6 @@ mod world;
 use crate::aberration::AberrationPlugin;
 use crate::actor::ActorPlugin;
 use crate::actions::ActionsPlugin;
-use crate::audio::InternalAudioPlugin;
 use crate::environment::EnvironmentPlugin;
 use crate::health::HealthPlugin;
 use crate::loading::LoadingPlugin;
@@ -25,8 +23,6 @@ use crate::player::PlayerPlugin;
 use crate::world::WorldPlugin;
 
 use bevy::app::App;
-#[cfg(debug_assertions)]
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 
 #[derive(States, Default, Clone, Eq, PartialEq, Debug, Hash)]
@@ -45,7 +41,6 @@ impl Plugin for GamePlugin {
             LoadingPlugin,
             MenuPlugin,
             ActionsPlugin,
-            InternalAudioPlugin,
             ActorPlugin,
             AberrationPlugin,
             HealthPlugin,
@@ -54,13 +49,5 @@ impl Plugin for GamePlugin {
             PlayerPlugin,
             WorldPlugin,
         ));
-
-        #[cfg(debug_assertions)]
-        {
-            app.add_plugins((
-                FrameTimeDiagnosticsPlugin::default(),
-                LogDiagnosticsPlugin::default(),
-            ));
-        }
     }
 }
