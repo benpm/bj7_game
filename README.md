@@ -1,3 +1,5 @@
+![](assets\vector_sprites\creeper_A.svg)
+
 # Bevy Jam 7
 
 Theme: ***"Extremely Incohesive Fever Dream"***

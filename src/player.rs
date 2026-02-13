@@ -1,7 +1,7 @@
 use crate::GameState;
 use crate::actions::Actions;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
-use crate::palette::PaletteQuantize;
+use crate::palette::PaletteSqueeze;
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
@@ -51,7 +51,7 @@ fn spawn_player(mut commands: Commands) {
                 Camera3d::default(),
                 Transform::default(),
                 FpsCamera,
-                PaletteQuantize::default(),
+                PaletteSqueeze::default(),
             ));
         });
 }
