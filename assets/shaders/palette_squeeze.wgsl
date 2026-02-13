@@ -7,6 +7,7 @@ const SUB_PALETTE_SIZE: i32 = 8;
 struct PaletteSqueeze {
     resolution: vec3f,
     time: f32,
+    darken: f32,
 }
 
 @group(0) @binding(0) var screen_texture: texture_2d<f32>;
@@ -53,7 +54,8 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4f {
 
     let screen_color = textureSample(screen_texture, texture_sampler, in.uv).rgb;
     let luminance = dot(screen_color, vec3f(0.2126, 0.7152, 0.0722));
+    let darkened = luminance * (1.0 - u.darken);
 
-    let color = get_dithered_palette(luminance, pixel);
+    let color = get_dithered_palette(darkened, pixel);
     return vec4f(color, 1.0);
 }

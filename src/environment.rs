@@ -1,4 +1,5 @@
 use crate::GameState;
+use crate::palette::PaletteDarken;
 use bevy::prelude::*;
 
 pub struct EnvironmentPlugin;
@@ -6,13 +7,10 @@ pub struct EnvironmentPlugin;
 impl Plugin for EnvironmentPlugin {
     fn build(&self, app: &mut App) {
         app.add_sub_state::<Environment>()
-            .add_systems(
-                OnEnter(GameState::Playing),
-                (init_timers, spawn_faint_overlay),
-            )
+            .add_systems(OnEnter(GameState::Playing), init_timers)
             .add_systems(
                 Update,
-                (tick_run_timer, tick_cycle_timer, update_faint_transition)
+                (tick_run_timer, tick_cycle_and_darken, update_label)
                     .chain()
                     .run_if(in_state(GameState::Playing)),
             )
@@ -60,47 +58,27 @@ struct CycleTimer {
     timer: Timer,
 }
 
-const RUN_DURATION: f32 = 300.0; // 5 minutes
-const CYCLE_INTERVAL: f32 = 60.0; // Switch environment every 60 seconds
-const FAINT_FADE_SECS: f32 = 0.5;
-
-/// Tracks the white-out faint transition between environments.
+/// Tracks the post-switch recovery fade (darken 1→0).
 #[derive(Resource)]
-struct FaintTransition {
-    phase: FaintPhase,
-    next_environment: Option<Environment>,
+struct RecoveryTimer {
+    timer: Timer,
 }
-
-enum FaintPhase {
-    None,
-    FadingOut(Timer),
-    FadingIn(Timer),
-}
-
-impl Default for FaintTransition {
-    fn default() -> Self {
-        Self {
-            phase: FaintPhase::None,
-            next_environment: None,
-        }
-    }
-}
-
-#[derive(Component)]
-struct FaintOverlay;
 
 /// HUD text showing current environment name.
 #[derive(Component)]
 struct EnvironmentLabel;
+
+const RUN_DURATION: f32 = 300.0;
+const CYCLE_INTERVAL: f32 = 60.0;
+const TRANSITION_LEAD_SECS: f32 = 5.0;
 
 fn init_timers(mut commands: Commands) {
     commands.insert_resource(RunTimer { elapsed: 0.0 });
     commands.insert_resource(CycleTimer {
         timer: Timer::from_seconds(CYCLE_INTERVAL, TimerMode::Repeating),
     });
-    commands.insert_resource(FaintTransition::default());
+    commands.insert_resource(PaletteDarken::default());
 
-    // Environment label in top-center
     commands.spawn((
         Text::new("DELIRIUM"),
         TextFont {
@@ -120,20 +98,6 @@ fn init_timers(mut commands: Commands) {
     ));
 }
 
-fn spawn_faint_overlay(mut commands: Commands) {
-    commands.spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            position_type: PositionType::Absolute,
-            ..default()
-        },
-        GlobalZIndex(60),
-        BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.0)),
-        FaintOverlay,
-    ));
-}
-
 fn tick_run_timer(
     time: Res<Time>,
     mut run_timer: ResMut<RunTimer>,
@@ -145,77 +109,67 @@ fn tick_run_timer(
     }
 }
 
-fn tick_cycle_timer(
+fn tick_cycle_and_darken(
     time: Res<Time>,
     mut cycle_timer: ResMut<CycleTimer>,
-    mut faint: ResMut<FaintTransition>,
+    mut darken: ResMut<PaletteDarken>,
+    recovery: Option<ResMut<RecoveryTimer>>,
+    mut commands: Commands,
     environment: Res<State<Environment>>,
+    mut next_env: ResMut<NextState<Environment>>,
 ) {
     cycle_timer.timer.tick(time.delta());
 
-    if cycle_timer.timer.just_finished() && matches!(faint.phase, FaintPhase::None) {
-        faint.phase = FaintPhase::FadingOut(Timer::from_seconds(FAINT_FADE_SECS, TimerMode::Once));
-        faint.next_environment = Some(environment.get().next());
+    // Pre-switch darkening: last TRANSITION_LEAD_SECS of the cycle
+    let remaining_frac = 1.0 - cycle_timer.timer.fraction();
+    let transition_threshold = TRANSITION_LEAD_SECS / CYCLE_INTERVAL;
+
+    if remaining_frac <= transition_threshold && recovery.is_none() {
+        // Map remaining fraction to darken: 0→1 as we approach the switch
+        darken.value = 1.0 - (remaining_frac / transition_threshold);
+    }
+
+    // Cycle fired: switch environment, start recovery
+    if cycle_timer.timer.just_finished() {
+        let next = environment.get().next();
+        next_env.set(next);
+        darken.value = 1.0;
+        commands.insert_resource(RecoveryTimer {
+            timer: Timer::from_seconds(TRANSITION_LEAD_SECS, TimerMode::Once),
+        });
+    }
+
+    // Post-switch recovery: darken 1→0
+    if let Some(mut recovery) = recovery {
+        recovery.timer.tick(time.delta());
+        darken.value = 1.0 - recovery.timer.fraction();
+        if recovery.timer.fraction() >= 1.0 {
+            darken.value = 0.0;
+            commands.remove_resource::<RecoveryTimer>();
+        }
     }
 }
 
-fn update_faint_transition(
-    time: Res<Time>,
-    mut faint: ResMut<FaintTransition>,
-    mut overlay_query: Query<&mut BackgroundColor, With<FaintOverlay>>,
-    mut next_env: ResMut<NextState<Environment>>,
+fn update_label(
+    environment: Res<State<Environment>>,
     mut label_query: Query<&mut Text, With<EnvironmentLabel>>,
 ) {
-    let mut new_phase = None;
-
-    match &mut faint.phase {
-        FaintPhase::None => {}
-        FaintPhase::FadingOut(timer) => {
-            timer.tick(time.delta());
-            let alpha = timer.fraction();
-            for mut bg in &mut overlay_query {
-                bg.0 = Color::srgba(1.0, 1.0, 1.0, alpha);
-            }
-            if timer.is_finished() {
-                // At peak white-out: switch environment
-                if let Some(env) = faint.next_environment.take() {
-                    for mut text in &mut label_query {
-                        **text = env.label().to_string();
-                    }
-                    next_env.set(env);
-                }
-                new_phase = Some(FaintPhase::FadingIn(Timer::from_seconds(
-                    FAINT_FADE_SECS,
-                    TimerMode::Once,
-                )));
-            }
+    if environment.is_changed() {
+        for mut text in &mut label_query {
+            **text = environment.get().label().to_string();
         }
-        FaintPhase::FadingIn(timer) => {
-            timer.tick(time.delta());
-            let alpha = 1.0 - timer.fraction();
-            for mut bg in &mut overlay_query {
-                bg.0 = Color::srgba(1.0, 1.0, 1.0, alpha);
-            }
-            if timer.is_finished() {
-                new_phase = Some(FaintPhase::None);
-            }
-        }
-    }
-
-    if let Some(phase) = new_phase {
-        faint.phase = phase;
     }
 }
 
 fn cleanup_environment(
     mut commands: Commands,
-    faint_query: Query<Entity, With<FaintOverlay>>,
     label_query: Query<Entity, With<EnvironmentLabel>>,
 ) {
     commands.remove_resource::<RunTimer>();
     commands.remove_resource::<CycleTimer>();
-    commands.remove_resource::<FaintTransition>();
-    for entity in faint_query.iter().chain(label_query.iter()) {
+    commands.remove_resource::<PaletteDarken>();
+    commands.remove_resource::<RecoveryTimer>();
+    for entity in &label_query {
         commands.entity(entity).despawn();
     }
 }

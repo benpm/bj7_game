@@ -59,12 +59,14 @@ impl Plugin for PalettePlugin {
 #[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
 struct PaletteSqueezeLabel;
 
-/// Fullscreen post-process that renders a palette-quantized raymarched scene.
+/// Fullscreen post-process that applies palette quantization with blue-noise dithering.
 /// Add this component to a Camera3d entity to enable the effect.
 #[derive(Component, ExtractComponent, Clone, Copy, ShaderType)]
 pub struct PaletteSqueeze {
     pub resolution: Vec3,
     pub time: f32,
+    /// 0.0 = normal, 1.0 = fully dark. Used for environment transitions.
+    pub darken: f32,
 }
 
 impl Default for PaletteSqueeze {
@@ -72,13 +74,21 @@ impl Default for PaletteSqueeze {
         Self {
             resolution: Vec3::new(1280.0, 720.0, 0.0),
             time: 0.0,
+            darken: 0.0,
         }
     }
+}
+
+/// Resource that other systems can write to control the palette darken effect.
+#[derive(Resource, Default)]
+pub struct PaletteDarken {
+    pub value: f32,
 }
 
 fn update_palette_squeeze(
     time: Res<Time>,
     window_q: Query<&Window, With<PrimaryWindow>>,
+    darken: Option<Res<PaletteDarken>>,
     mut squeeze_q: Query<&mut PaletteSqueeze>,
 ) {
     let Ok(window) = window_q.single() else {
@@ -86,10 +96,12 @@ fn update_palette_squeeze(
     };
     let resolution = Vec3::new(window.width(), window.height(), 0.0);
     let elapsed = time.elapsed_secs();
+    let darken_val = darken.map_or(0.0, |d| d.value);
 
     for mut squeeze in &mut squeeze_q {
         squeeze.resolution = resolution;
         squeeze.time = elapsed;
+        squeeze.darken = darken_val;
     }
 }
 
