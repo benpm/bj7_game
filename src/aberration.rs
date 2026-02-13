@@ -1,6 +1,7 @@
 use crate::GameState;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
 use crate::loading::TextureAssets;
+use crate::pause::game_not_paused;
 use crate::player::Player;
 use bevy::prelude::*;
 use rand::Rng;
@@ -22,7 +23,7 @@ impl Plugin for AberrationPlugin {
             .add_systems(
                 Update,
                 (spawn_aberration_periodic, aberration_face_player, animate_spawn)
-                    .run_if(in_state(GameState::Playing)),
+                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_aberrations);
     }

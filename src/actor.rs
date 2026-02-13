@@ -1,4 +1,5 @@
 use crate::GameState;
+use crate::pause::game_not_paused;
 use bevy::prelude::*;
 
 pub struct ActorPlugin;
@@ -9,7 +10,7 @@ impl Plugin for ActorPlugin {
             Update,
             (actor_apply_yaw, actor_movement, actor_gravity)
                 .chain()
-                .run_if(in_state(GameState::Playing)),
+                .run_if(in_state(GameState::Playing).and(game_not_paused)),
         );
     }
 }

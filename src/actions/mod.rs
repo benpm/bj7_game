@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::GameState;
 use crate::actions::game_control::{GameControl, get_movement};
+use crate::pause::game_not_paused;
 
 mod game_control;
 
@@ -13,7 +14,7 @@ impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Actions>().add_systems(
             Update,
-            set_movement_actions.run_if(in_state(GameState::Playing)),
+            set_movement_actions.run_if(in_state(GameState::Playing).and(game_not_paused)),
         );
     }
 }

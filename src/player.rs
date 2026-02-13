@@ -3,6 +3,7 @@ use crate::aberration::{SpawnAnimation, spawn_sensitivity_factor};
 use crate::actions::Actions;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
 use crate::palette::PaletteSqueeze;
+use crate::pause::game_not_paused;
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
@@ -14,9 +15,9 @@ impl Plugin for PlayerPlugin {
         app.add_systems(OnEnter(GameState::Playing), (spawn_player, grab_cursor))
             .add_systems(
                 Update,
-                (player_mouse_look, player_movement_input, escape_to_menu)
+                (player_mouse_look, player_movement_input)
                     .chain()
-                    .run_if(in_state(GameState::Playing)),
+                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), (cleanup_player, release_cursor));
     }
@@ -111,15 +112,6 @@ fn release_cursor(mut cursor_query: Query<&mut CursorOptions, With<PrimaryWindow
     if let Ok(mut cursor) = cursor_query.single_mut() {
         cursor.grab_mode = CursorGrabMode::None;
         cursor.visible = true;
-    }
-}
-
-fn escape_to_menu(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut next_state: ResMut<NextState<GameState>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::Escape) {
-        next_state.set(GameState::Menu);
     }
 }
 

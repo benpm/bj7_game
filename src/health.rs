@@ -1,4 +1,5 @@
 use crate::GameState;
+use crate::pause::game_not_paused;
 use bevy::prelude::*;
 
 pub struct HealthPlugin;
@@ -10,7 +11,7 @@ impl Plugin for HealthPlugin {
                 Update,
                 (passive_drain, update_vignette)
                     .chain()
-                    .run_if(in_state(GameState::Playing)),
+                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_health);
     }

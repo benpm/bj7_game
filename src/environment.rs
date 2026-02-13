@@ -1,5 +1,6 @@
 use crate::GameState;
 use crate::palette::PaletteDarken;
+use crate::pause::game_not_paused;
 use bevy::prelude::*;
 
 pub struct EnvironmentPlugin;
@@ -12,7 +13,7 @@ impl Plugin for EnvironmentPlugin {
                 Update,
                 (tick_run_timer, tick_cycle_and_darken, update_label)
                     .chain()
-                    .run_if(in_state(GameState::Playing)),
+                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_environment);
     }
@@ -48,8 +49,8 @@ impl Environment {
 
 /// Total elapsed time for the run. Game ends at RUN_DURATION.
 #[derive(Resource)]
-struct RunTimer {
-    elapsed: f32,
+pub struct RunTimer {
+    pub elapsed: f32,
 }
 
 /// Cycles between environments on a fixed interval.

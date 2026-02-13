@@ -8,6 +8,7 @@ mod health;
 mod loading;
 mod menu;
 mod palette;
+mod pause;
 mod player;
 mod world;
 
@@ -19,6 +20,7 @@ use crate::health::HealthPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::palette::PalettePlugin;
+use crate::pause::PausePlugin;
 use crate::player::PlayerPlugin;
 use crate::world::WorldPlugin;
 
@@ -48,6 +50,7 @@ impl Plugin for GamePlugin {
             HealthPlugin,
             EnvironmentPlugin,
             PalettePlugin,
+            PausePlugin,
             PlayerPlugin,
             WorldPlugin,
         ));
