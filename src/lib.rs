@@ -24,6 +24,7 @@ use crate::world::WorldPlugin;
 
 use bevy::app::App;
 use bevy::prelude::*;
+use bevy_svg::prelude::SvgPlugin;
 
 #[derive(States, Default, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum GameState {
@@ -38,6 +39,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>().add_plugins((
+            SvgPlugin,
             LoadingPlugin,
             MenuPlugin,
             ActionsPlugin,

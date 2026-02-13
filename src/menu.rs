@@ -1,6 +1,7 @@
 use crate::GameState;
 use crate::loading::TextureAssets;
 use bevy::prelude::*;
+use bevy_svg::prelude::*;
 
 pub struct MenuPlugin;
 
@@ -32,9 +33,19 @@ impl Default for ButtonColors {
 #[derive(Component)]
 struct Menu;
 
-fn setup_menu(mut commands: Commands, textures: Res<TextureAssets>) {
+fn setup_menu(mut commands: Commands, textures: Res<TextureAssets>, asset_server: Res<AssetServer>) {
     info!("menu");
     commands.spawn((Camera2d, Msaa::Off, Menu));
+
+    // SVG banner above menu buttons
+    let svg = asset_server.load("vector_sprites/creeper_A.svg");
+    commands.spawn((
+        Svg2d(svg),
+        Origin::Center,
+        Transform::from_xyz(0.0, 150.0, 0.0).with_scale(Vec3::splat(0.5)),
+        Menu,
+    ));
+
     commands
         .spawn((
             Node {
