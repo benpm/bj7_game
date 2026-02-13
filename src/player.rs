@@ -1,4 +1,5 @@
 use crate::GameState;
+use crate::aberration::{SpawnAnimation, spawn_sensitivity_factor};
 use crate::actions::Actions;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
 use crate::palette::PaletteSqueeze;
@@ -61,6 +62,7 @@ fn player_mouse_look(
     mouse_motion: Res<AccumulatedMouseMotion>,
     mut player_query: Query<&mut Actor, With<Player>>,
     mut camera_query: Query<&mut Transform, (With<FpsCamera>, Without<Player>)>,
+    spawn_anim_query: Query<(), With<SpawnAnimation>>,
 ) {
     let Ok(mut actor) = player_query.single_mut() else {
         return;
@@ -70,7 +72,9 @@ fn player_mouse_look(
         return;
     }
 
-    actor.yaw -= mouse_motion.delta.x * MOUSE_SENSITIVITY;
+    let sensitivity = MOUSE_SENSITIVITY * spawn_sensitivity_factor(spawn_anim_query.iter().count());
+
+    actor.yaw -= mouse_motion.delta.x * sensitivity;
 
     let pitch = if let Ok(cam) = camera_query.single() {
         let (pitch, _, _) = cam.rotation.to_euler(EulerRot::XYZ);
@@ -78,7 +82,7 @@ fn player_mouse_look(
     } else {
         0.0
     };
-    let new_pitch = (pitch - mouse_motion.delta.y * MOUSE_SENSITIVITY).clamp(-MAX_PITCH, MAX_PITCH);
+    let new_pitch = (pitch - mouse_motion.delta.y * sensitivity).clamp(-MAX_PITCH, MAX_PITCH);
 
     if let Ok(mut camera_transform) = camera_query.single_mut() {
         camera_transform.rotation = Quat::from_rotation_x(new_pitch);
