@@ -2,6 +2,7 @@ use crate::GameState;
 use crate::aberration::{SpawnAnimation, spawn_sensitivity_factor};
 use crate::actions::Actions;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
+use crate::dispel::DispelState;
 use crate::palette::PaletteSqueeze;
 use crate::pause::game_not_paused;
 use bevy::input::mouse::AccumulatedMouseMotion;
@@ -27,7 +28,7 @@ impl Plugin for PlayerPlugin {
 pub struct Player;
 
 #[derive(Component)]
-struct FpsCamera;
+pub struct FpsCamera;
 
 const PLAYER_HEIGHT: f32 = 1.7;
 const MOUSE_SENSITIVITY: f32 = 0.001;
@@ -64,7 +65,12 @@ fn player_mouse_look(
     mut player_query: Query<&mut Actor, With<Player>>,
     mut camera_query: Query<&mut Transform, (With<FpsCamera>, Without<Player>)>,
     spawn_anim_query: Query<(), With<SpawnAnimation>>,
+    dispel: Option<Res<DispelState>>,
 ) {
+    if dispel.is_some_and(|d| d.active) {
+        return;
+    }
+
     let Ok(mut actor) = player_query.single_mut() else {
         return;
     };

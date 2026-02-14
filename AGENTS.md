@@ -1,36 +1,19 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code, Copilot, Gemini CLI, etc.
 
-## Build & Run Commands
+## General Instructions
+- Use context7 MCP to search for Bevy API or rust things
+- Update and revise this file as needed, be concise though
+- Other important files:
+  - BEVY.md - update as needed, bevy info
+  - TODO.md - if asked to work on TODOs, read this file. otherwise, you don't need to check it.
+  - README.md - game design doc, general info, update as needed
 
-```bash
-# Native development (fast compile with dynamic linking)
-cargo run --features dev
-
-# Native release build
-cargo run --release
-
-# Run tests (all platforms in CI: Windows, Linux, macOS)
-cargo test
-
-# Run a single test
-cargo test test_name
-
-# Lint
-cargo clippy --all-targets --all-features -- -Dwarnings
-
-# Format check
-cargo fmt --all -- --check
-
-# Web development (requires: cargo install --locked trunk && rustup target add wasm32-unknown-unknown)
-trunk serve              # Dev server on localhost:8080
-trunk build --release    # Production Wasm build
-
-# Mobile
-cargo apk run -p mobile  # Android
-cd mobile && make run     # iOS (requires Xcode)
-```
+## Commands
+- Build: Use `bevy build` or `cargo build` if bevy CLI isn't available.
+- Run: `bevy run`, or `cargo run`
+- Check: When working on tasks, it's typically sufficient to just run `bevy lint` or `cargo check`
 
 ## Architecture
 
@@ -49,6 +32,7 @@ State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle se
 - **MenuPlugin** (`menu.rs`) — Main menu UI with Play and Exit buttons. Uses `webbrowser` crate for external links.
 - **ActionsPlugin** (`actions/`) — Input abstraction layer. `Actions` resource holds `player_movement: Option<Vec2>` from WASD/arrows. Game systems read `Actions` instead of polling input directly.
 - **AberrationPlugin** (`aberration.rs`) — Billboard sprite enemies. Spawns quad meshes with aberration textures at scattered positions. Billboard system rotates sprites to face player (Y-axis only). Uses `AlphaMode::Mask`, unlit, double-sided.
+- **DispelPlugin** (`dispel.rs`) — Draw-to-banish mechanic. Left click enters dispel mode (camera locks, cursor shown). Click+hold draws segmented line. Closing the loop dispels aberrations whose screen-space centroid is inside the polygon. Right click cancels. Uses Camera2d overlay for gizmo rendering.
 - **HealthPlugin** (`health.rs`) — Health/sanity resource (0.0–1.0) with passive drain. White vignette overlay at `GlobalZIndex(50)` scales with health loss.
 - **EnvironmentPlugin** (`environment.rs`) — `Environment` SubState under `GameState::Playing` (Delirium/Dissociation/Hypervigilance). 60s cycle timer with transition overlay at `GlobalZIndex(60)`. 5-minute run timer.
 - **PalettePlugin** (`palette.rs`) — Post-processing shader via `FullscreenMaterial`. Quantizes rendered output to 3-color palette (black, dark grey, white) based on luminance. Shader at `assets/shaders/palette_quantize.wgsl`.
@@ -57,26 +41,15 @@ State transitions gate which systems run. `OnEnter`/`OnExit` schedules handle se
 
 ### Key Dependencies
 
+Check `Cargo.toml` for more
+
 - **bevy_kira_audio** — Used instead of Bevy's built-in audio to avoid web/mobile conflicts. Bevy's audio features are explicitly excluded in Cargo.toml.
 - **bevy_asset_loader** — Declarative asset collections with automatic loading states.
 
 ### Project Layout
 
 - `src/` — Rust game code
-- `mobile/` — Mobile platform crate (`staticlib`/`cdylib`), Android manifest, iOS Xcode project
-- `godot_sketch/` — Godot 4.5 subproject for art/prototyping (Aseprite import via AsepriteWizard plugin)
-  - Please ignore this directory
-- `assets/audio/`, `assets/textures/` — Game assets
+- `assets/audio/`, `assets/textures/`, `assets/vector_sprites` — Game assets
 - `assets/shaders/` — WGSL shaders (palette quantize post-process)
 - `build/` — Platform-specific resources (icons, web styling)
 - `.github/workflows/` — CI (test/lint/fmt) and release pipelines for all platforms
-
-### Build Profiles
-
-- **dev**: `opt-level = 1` for code, `opt-level = 3` for dependencies
-- **release**: `opt-level = s`, LTO enabled, stripped
-- **dist**: `opt-level = 3`, LTO, stripped (for distribution builds)
-
-### Release Process
-
-Tag with `v*.*.*` to trigger release builds. Outputs: Windows `.exe`+`.msi`, macOS universal `.dmg`, Linux binary, plus separate workflows for Android AAB and iOS TestFlight.
