@@ -11,6 +11,7 @@ mod menu;
 mod palette;
 mod pause;
 mod player;
+mod transition;
 mod world;
 
 use crate::aberration::AberrationPlugin;
@@ -24,6 +25,7 @@ use crate::menu::MenuPlugin;
 use crate::palette::PalettePlugin;
 use crate::pause::PausePlugin;
 use crate::player::PlayerPlugin;
+use crate::transition::TransitionPlugin;
 use crate::world::WorldPlugin;
 
 use bevy::app::App;
@@ -55,6 +57,7 @@ impl Plugin for GamePlugin {
             PalettePlugin,
             PausePlugin,
             PlayerPlugin,
+            TransitionPlugin,
             WorldPlugin,
         ));
     }

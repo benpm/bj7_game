@@ -1,6 +1,7 @@
 use crate::GameState;
 use crate::palette::PaletteDarken;
 use crate::pause::game_not_paused;
+use crate::transition::SceneTransition;
 use bevy::prelude::*;
 
 pub struct EnvironmentPlugin;
@@ -11,7 +12,7 @@ impl Plugin for EnvironmentPlugin {
             .add_systems(OnEnter(GameState::Playing), init_timers)
             .add_systems(
                 Update,
-                (tick_run_timer, tick_cycle_and_darken, update_label)
+                (tick_run_timer, tick_cycle_and_transition, update_label)
                     .chain()
                     .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
@@ -59,12 +60,6 @@ struct CycleTimer {
     timer: Timer,
 }
 
-/// Tracks the post-switch recovery fade (darken 1→0).
-#[derive(Resource)]
-struct RecoveryTimer {
-    timer: Timer,
-}
-
 /// HUD text showing current environment name.
 #[derive(Component)]
 struct EnvironmentLabel;
@@ -78,7 +73,6 @@ fn init_timers(mut commands: Commands) {
     commands.insert_resource(CycleTimer {
         timer: Timer::from_seconds(CYCLE_INTERVAL, TimerMode::Repeating),
     });
-    commands.insert_resource(PaletteDarken::default());
 }
 
 fn tick_run_timer(
@@ -92,44 +86,32 @@ fn tick_run_timer(
     }
 }
 
-fn tick_cycle_and_darken(
+fn tick_cycle_and_transition(
     time: Res<Time>,
     mut cycle_timer: ResMut<CycleTimer>,
-    mut darken: ResMut<PaletteDarken>,
-    recovery: Option<ResMut<RecoveryTimer>>,
-    mut commands: Commands,
+    mut transition: Option<ResMut<SceneTransition>>,
     environment: Res<State<Environment>>,
     mut next_env: ResMut<NextState<Environment>>,
 ) {
     cycle_timer.timer.tick(time.delta());
 
+    let Some(transition) = transition.as_mut() else {
+        return;
+    };
+
     // Pre-switch darkening: last TRANSITION_LEAD_SECS of the cycle
     let remaining_frac = 1.0 - cycle_timer.timer.fraction();
     let transition_threshold = TRANSITION_LEAD_SECS / CYCLE_INTERVAL;
 
-    if remaining_frac <= transition_threshold && recovery.is_none() {
-        // Map remaining fraction to darken: 0→1 as we approach the switch
-        darken.value = 1.0 - (remaining_frac / transition_threshold);
+    if remaining_frac <= transition_threshold && transition.is_idle() {
+        transition.fade_out(TRANSITION_LEAD_SECS * remaining_frac / transition_threshold);
     }
 
-    // Cycle fired: switch environment, start recovery
+    // Cycle fired: switch environment, start recovery fade-in
     if cycle_timer.timer.just_finished() {
         let next = environment.get().next();
         next_env.set(next);
-        darken.value = 1.0;
-        commands.insert_resource(RecoveryTimer {
-            timer: Timer::from_seconds(TRANSITION_LEAD_SECS, TimerMode::Once),
-        });
-    }
-
-    // Post-switch recovery: darken 1→0
-    if let Some(mut recovery) = recovery {
-        recovery.timer.tick(time.delta());
-        darken.value = 1.0 - recovery.timer.fraction();
-        if recovery.timer.fraction() >= 1.0 {
-            darken.value = 0.0;
-            commands.remove_resource::<RecoveryTimer>();
-        }
+        transition.fade_in(TRANSITION_LEAD_SECS);
     }
 }
 
@@ -148,7 +130,7 @@ fn cleanup_environment(mut commands: Commands, label_query: Query<Entity, With<E
     commands.remove_resource::<RunTimer>();
     commands.remove_resource::<CycleTimer>();
     commands.remove_resource::<PaletteDarken>();
-    commands.remove_resource::<RecoveryTimer>();
+    commands.remove_resource::<SceneTransition>();
     for entity in &label_query {
         commands.entity(entity).despawn();
     }
