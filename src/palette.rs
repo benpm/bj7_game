@@ -1,5 +1,6 @@
 use bevy::core_pipeline::FullscreenShader;
 use bevy::core_pipeline::core_3d::graph::{Core3d, Node3d};
+use bevy::ui_render::graph::NodeUi;
 use bevy::ecs::query::QueryItem;
 use bevy::image::BevyDefault;
 use bevy::prelude::*;
@@ -48,9 +49,9 @@ impl Plugin for PalettePlugin {
             .add_render_graph_edges(
                 Core3d,
                 (
-                    Node3d::Tonemapping,
+                    NodeUi::UiPass,
                     PaletteSqueezeLabel,
-                    Node3d::EndMainPassPostProcessing,
+                    Node3d::Upscaling,
                 ),
             );
     }
