@@ -6,10 +6,10 @@ pub struct HealthPlugin;
 
 impl Plugin for HealthPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), (init_health))
+        app.add_systems(OnEnter(GameState::Playing), init_health)
             .add_systems(
                 Update,
-                (passive_drain)
+                passive_drain
                     .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_health);

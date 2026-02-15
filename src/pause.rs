@@ -1,6 +1,7 @@
 use crate::GameState;
 use crate::environment::{Environment, RunTimer};
 use crate::health::Health;
+use crate::loading::FontAssets;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
@@ -68,7 +69,9 @@ fn manage_pause_menu(
     health: Option<Res<Health>>,
     run_timer: Option<Res<RunTimer>>,
     environment: Option<Res<State<Environment>>>,
+    fonts: Res<FontAssets>,
 ) {
+    let font = fonts.main.clone();
     if !paused.is_changed() {
         // Update stats text if paused
         return;
@@ -101,6 +104,7 @@ fn manage_pause_menu(
                 parent.spawn((
                     Text::new("PAUSED"),
                     TextFont {
+                        font: font.clone(),
                         font_size: 48.0,
                         ..default()
                     },
@@ -119,6 +123,7 @@ fn manage_pause_menu(
                 parent.spawn((
                     Text::new(stats),
                     TextFont {
+                        font: font.clone(),
                         font_size: 24.0,
                         ..default()
                     },
@@ -148,6 +153,7 @@ fn manage_pause_menu(
                     .with_child((
                         Text::new("Continue"),
                         TextFont {
+                            font: font.clone(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -171,6 +177,7 @@ fn manage_pause_menu(
                     .with_child((
                         Text::new("Exit to Menu"),
                         TextFont {
+                            font: font.clone(),
                             font_size: 32.0,
                             ..default()
                         },

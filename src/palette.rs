@@ -96,7 +96,7 @@ fn update_palette_squeeze(
     };
     let resolution = Vec3::new(window.width(), window.height(), 0.0);
     let elapsed = time.elapsed_secs();
-    let darken_val = darken.map_or(0.0, |d| d.value);
+    let _darken_val = darken.map_or(0.0, |d| d.value);
 
     for mut squeeze in &mut squeeze_q {
         squeeze.resolution = resolution;

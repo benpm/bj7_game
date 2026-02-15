@@ -1,5 +1,5 @@
 use crate::GameState;
-use crate::loading::TextureAssets;
+use crate::loading::{FontAssets, TextureAssets};
 use bevy::prelude::*;
 use bevy_svg::prelude::*;
 
@@ -36,8 +36,10 @@ struct Menu;
 fn setup_menu(
     mut commands: Commands,
     textures: Res<TextureAssets>,
+    fonts: Res<FontAssets>,
     asset_server: Res<AssetServer>,
 ) {
+    let font = fonts.main.clone();
     info!("menu");
     commands.spawn((Camera2d, Msaa::Off, Menu));
 
@@ -81,6 +83,7 @@ fn setup_menu(
                 .with_child((
                     Text::new("Play"),
                     TextFont {
+                        font: font.clone(),
                         font_size: 40.0,
                         ..default()
                     },
@@ -105,6 +108,7 @@ fn setup_menu(
                 .with_child((
                     Text::new("Exit"),
                     TextFont {
+                        font: font.clone(),
                         font_size: 40.0,
                         ..default()
                     },
@@ -147,6 +151,7 @@ fn setup_menu(
                     parent.spawn((
                         Text::new("Made with Bevy"),
                         TextFont {
+                            font: font.clone(),
                             font_size: 15.0,
                             ..default()
                         },
@@ -185,6 +190,7 @@ fn setup_menu(
                     parent.spawn((
                         Text::new("Open source"),
                         TextFont {
+                            font: font.clone(),
                             font_size: 15.0,
                             ..default()
                         },

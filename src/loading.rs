@@ -8,9 +8,16 @@ impl Plugin for LoadingPlugin {
         app.add_loading_state(
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Menu)
+                .load_collection::<FontAssets>()
                 .load_collection::<TextureAssets>(),
         );
     }
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct FontAssets {
+    #[asset(path = "fonts/sd_auto_pilot.ttf")]
+    pub main: Handle<Font>,
 }
 
 #[derive(AssetCollection, Resource)]
