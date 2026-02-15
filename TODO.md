@@ -6,7 +6,6 @@
 
 > These are ready for work, probably.
 
-- [ ] Separate out the transition logic from environment.rs into a new struct, allowing a scene transition to be triggered indepdentently of the Environment. The transition should last for some given amount of time (1 second by default). Trigger a transition when going between the menu and game. During the transition, the same logic should be applied of fading to black using the `darken` parameter 
 
 
 
@@ -29,6 +28,7 @@
 
 ## Done
 
+- [x] Separate out the transition logic from environment.rs into a new struct, allowing scene transitions to be triggered independently
 - [x] Use font assets/fonts/sd-auto-pilot.ttf for the font for all UI
 - [x] Update palette.rs to work on the entire game's full color output, including UI
 - [x] Make aberrations spawn in the gameplay loop, only spawning them inside the view frustum, reducing the mouse sensitivity to a low value while it is in its spawn animation. Spawn one every 5-10 seconds and only allow 5 to be existing at a time. Do not spawn any at game start.
