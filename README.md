@@ -4,6 +4,9 @@
 
 Theme: ***"Extremely Incohesive Fever Dream"***
 
+## Resoources Used
+- https://www.dafont.com/sd-auto-pilot.font
+
 ---
 ## Brainstorm
 - Idk i like to start backwards and think of a name first and go from there sometimes, here are some off the dome:
@@ -49,7 +52,3 @@ Game run takes 5 minutes
 
 ### Design
 https://coolors.co/4357ad-e5f2c9-7f534b-8c705f-1e1a1d
-
-
-## Godot Sketch
-To help visualize some things during development of the bevy-based submission.

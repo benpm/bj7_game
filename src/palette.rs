@@ -101,7 +101,7 @@ fn update_palette_squeeze(
     for mut squeeze in &mut squeeze_q {
         squeeze.resolution = resolution;
         squeeze.time = elapsed;
-        squeeze.darken = darken_val;
+        squeeze.darken = 0.0;
     }
 }
 

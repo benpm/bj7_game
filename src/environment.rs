@@ -79,24 +79,6 @@ fn init_timers(mut commands: Commands) {
         timer: Timer::from_seconds(CYCLE_INTERVAL, TimerMode::Repeating),
     });
     commands.insert_resource(PaletteDarken::default());
-
-    commands.spawn((
-        Text::new("DELIRIUM"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgba(1.0, 1.0, 1.0, 0.7)),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(20.0),
-            width: Val::Percent(100.0),
-            justify_content: JustifyContent::Center,
-            ..default()
-        },
-        GlobalZIndex(40),
-        EnvironmentLabel,
-    ));
 }
 
 fn tick_run_timer(

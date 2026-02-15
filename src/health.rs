@@ -6,11 +6,10 @@ pub struct HealthPlugin;
 
 impl Plugin for HealthPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), (init_health, spawn_vignette))
+        app.add_systems(OnEnter(GameState::Playing), (init_health))
             .add_systems(
                 Update,
-                (passive_drain, update_vignette)
-                    .chain()
+                (passive_drain)
                     .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_health);
@@ -61,33 +60,9 @@ fn init_health(mut commands: Commands) {
     commands.insert_resource(Health::default());
 }
 
-fn spawn_vignette(mut commands: Commands) {
-    commands.spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            position_type: PositionType::Absolute,
-            ..default()
-        },
-        GlobalZIndex(50),
-        BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.0)),
-        HealthVignette,
-    ));
-}
-
 fn passive_drain(time: Res<Time>, mut health: ResMut<Health>) {
     let drain = health.drain_rate * time.delta_secs();
     health.damage(drain);
-}
-
-fn update_vignette(
-    health: Res<Health>,
-    mut query: Query<&mut BackgroundColor, With<HealthVignette>>,
-) {
-    let alpha = 1.0 - health.fraction();
-    for mut bg in &mut query {
-        bg.0 = Color::srgba(1.0, 1.0, 1.0, alpha);
-    }
 }
 
 fn cleanup_health(mut commands: Commands, query: Query<Entity, With<HealthVignette>>) {

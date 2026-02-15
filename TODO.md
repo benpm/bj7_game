@@ -1,28 +1,21 @@
 # TODO
 
-<!-- dear AGENT:
-Do these in written order. Make commit before moving on to next task. Iterate until there are no tasks left. Check them off as you go. If anything is unclear, add questions for USER to answer to the end of the file and move on.
--->
+> Do these in written order. Make commit before moving on to next task. Iterate until there are no tasks left. Check them off as you go, moving them to [done](#done). If anything is unclear, add questions for USER to answer in [Questions](#questions)
 
 ## Ready
 
-These are ready for work, probably.
+> These are ready for work, probably.
 
-- [x] In order to dispel the aberrations, the player should be able to left click, which will enable dispel mode. In dispel mode, the camera will lock in place, and the mouse cursor should be shown. Then, if the player left clicks and holds, a segmented line should be drawn, with each segment being an additional time step that the mouse button is held. If the mouse cursor gets near to the first click point, and the loop is closed, aberrations with their screen-space centroid inside the polygon are dispelled.
+- [ ] Use font assets/fonts/sd-auto-pilot.ttf for the font for all UI
+- [ ] Update palette.rs to work on the entire game's full color output, including UI
+- [ ] Separate out the transition logic from environment.rs into a new struct, allowing a scene transition to be triggered indepdentently of the Environment. The transition should last for some given amount of time (1 second by default). Trigger a transition when going between the menu and game. During the transition, the same logic should be applied of fading to black using the `darken` parameter 
 
 
 
-## Done
-
-- [x] Make aberrations spawn in the gameplay loop, only spawning them inside the view frustum, reducing the mouse sensitivity to a low value while it is in its spawn animation. Spawn one every 5-10 seconds and only allow 5 to be existing at a time. Do not spawn any at game start.
-- [x] Make color overlay transition only start to animate T-5 seconds from scene switch, also instead of a solid color overlay, add a new shader parameter in palette.rs to darken input color before quantization
-- [x] Add svg rendering crate `Weasy666/bevy_svg`. Add "assets/vector_sprites/creeper_A.svg" as a banner in the menu screen
-- [x] Pressing escape in-game should bring up a pause menu with various game stats and a button to Continue, and a button to Exit to Menu.
-- [x] Use the github mcp or the github cli (`gh`) to check the status of the CI pipelines, fix any issues
 
 ## WIP
 
-These are WIP and should not be worked on until moved to .
+> These are WIP and should not be worked on until moved to [done](#done)
 
 - [ ] Add Puppeteer plugin that can automate basic gameplay, and take screenshots, to test gameplay functionality. Make a test and run it.
   - **Prerequisites**: `cargo install --locked trunk` (trunk not currently installed; wasm target + Node.js v25 + npm 11 already present)
@@ -34,3 +27,13 @@ These are WIP and should not be worked on until moved to .
 
 ## Questions
 <!-- questions for USER go here: -->
+
+
+## Done
+
+- [x] Make aberrations spawn in the gameplay loop, only spawning them inside the view frustum, reducing the mouse sensitivity to a low value while it is in its spawn animation. Spawn one every 5-10 seconds and only allow 5 to be existing at a time. Do not spawn any at game start.
+- [x] Make color overlay transition only start to animate T-5 seconds from scene switch, also instead of a solid color overlay, add a new shader parameter in palette.rs to darken input color before quantization
+- [x] Add svg rendering crate `Weasy666/bevy_svg`. Add "assets/vector_sprites/creeper_A.svg" as a banner in the menu screen
+- [x] Pressing escape in-game should bring up a pause menu with various game stats and a button to Continue, and a button to Exit to Menu.
+- [x] Use the github mcp or the github cli (`gh`) to check the status of the CI pipelines, fix any issues
+- [x] In order to dispel the aberrations, the player should be able to left click, which will enable dispel mode. In dispel mode, the camera will lock in place, and the mouse cursor should be shown. Then, if the player left clicks and holds, a segmented line should be drawn, with each segment being an additional time step that the mouse button is held. If the mouse cursor gets near to the first click point, and the loop is closed, aberrations with their screen-space centroid inside the polygon are dispelled.

@@ -29,6 +29,8 @@ impl Plugin for DispelPlugin {
 const SEGMENT_INTERVAL: f32 = 0.05;
 const CLOSURE_DISTANCE: f32 = 30.0;
 const MIN_POINTS: usize = 10;
+/// How far in front of the camera to place gizmo points (world units).
+const GIZMO_DEPTH: f32 = 0.5;
 
 #[derive(Resource)]
 pub struct DispelState {
@@ -49,9 +51,6 @@ impl Default for DispelState {
     }
 }
 
-#[derive(Component)]
-struct DispelCamera;
-
 fn init_dispel(mut commands: Commands) {
     commands.insert_resource(DispelState::default());
 }
@@ -59,10 +58,8 @@ fn init_dispel(mut commands: Commands) {
 fn toggle_dispel(
     mouse: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<DispelState>,
-    mut commands: Commands,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
     window_q: Query<&Window, With<PrimaryWindow>>,
-    camera_q: Query<Entity, With<DispelCamera>>,
 ) {
     if !mouse.just_pressed(MouseButton::Left) {
         return;
@@ -76,19 +73,6 @@ fn toggle_dispel(
         if let Ok(mut cursor) = cursor_q.single_mut() {
             cursor.grab_mode = CursorGrabMode::None;
             cursor.visible = true;
-        }
-        // Spawn overlay Camera2d for gizmo rendering
-        if camera_q.is_empty() {
-            commands.spawn((
-                Camera2d,
-                Camera {
-                    order: 2,
-                    clear_color: ClearColorConfig::None,
-                    ..default()
-                },
-                Msaa::Off,
-                DispelCamera,
-            ));
         }
     } else if !state.drawing {
         // Start drawing
@@ -138,7 +122,6 @@ fn check_closure_and_dispel(
     window_q: Query<&Window, With<PrimaryWindow>>,
     aberration_q: Query<(Entity, &GlobalTransform), With<Aberration>>,
     camera_q: Query<(&Camera, &GlobalTransform), With<FpsCamera>>,
-    dispel_cam_q: Query<Entity, With<DispelCamera>>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     if !state.active || !state.drawing || state.points.len() < MIN_POINTS {
@@ -173,26 +156,22 @@ fn check_closure_and_dispel(
     }
 
     // Exit dispel mode
-    deactivate_dispel(&mut state, &mut commands, &mut cursor_q, &dispel_cam_q);
+    deactivate_dispel(&mut state, &mut cursor_q);
 }
 
 fn exit_dispel_on_right_click(
     mouse: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<DispelState>,
-    mut commands: Commands,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
-    dispel_cam_q: Query<Entity, With<DispelCamera>>,
 ) {
     if state.active && mouse.just_pressed(MouseButton::Right) {
-        deactivate_dispel(&mut state, &mut commands, &mut cursor_q, &dispel_cam_q);
+        deactivate_dispel(&mut state, &mut cursor_q);
     }
 }
 
 fn deactivate_dispel(
     state: &mut DispelState,
-    commands: &mut Commands,
     cursor_q: &mut Query<&mut CursorOptions, With<PrimaryWindow>>,
-    dispel_cam_q: &Query<Entity, With<DispelCamera>>,
 ) {
     state.active = false;
     state.drawing = false;
@@ -201,45 +180,54 @@ fn deactivate_dispel(
         cursor.grab_mode = CursorGrabMode::Locked;
         cursor.visible = false;
     }
-    for entity in dispel_cam_q.iter() {
-        commands.entity(entity).despawn();
-    }
+}
+
+/// Project a viewport pixel coordinate to a 3D world point at GIZMO_DEPTH in front of the camera.
+fn viewport_to_world_point(camera: &Camera, cam_transform: &GlobalTransform, px: Vec2) -> Option<Vec3> {
+    let ray = camera.viewport_to_world(cam_transform, px).ok()?;
+    Some(ray.get_point(GIZMO_DEPTH))
 }
 
 fn draw_dispel_gizmos(
     state: Res<DispelState>,
     mut gizmos: Gizmos,
     window_q: Query<&Window, With<PrimaryWindow>>,
+    camera_q: Query<(&Camera, &GlobalTransform), With<FpsCamera>>,
 ) {
     if !state.active || state.points.len() < 2 {
         return;
     }
 
+    let Ok((camera, cam_transform)) = camera_q.single() else {
+        return;
+    };
+
+    // Convert viewport points to 3D world positions near the camera
+    let world_points: Vec<Vec3> = state
+        .points
+        .iter()
+        .filter_map(|px| viewport_to_world_point(camera, cam_transform, *px))
+        .collect();
+
+    if world_points.len() >= 2 {
+        gizmos.linestrip(world_points.iter().copied(), Color::WHITE);
+    }
+
+    // Draw closure target indicator at the start point
+    if let Some(start) = viewport_to_world_point(camera, cam_transform, state.points[0]) {
+        gizmos.sphere(Isometry3d::from_translation(start), GIZMO_DEPTH * 0.02, Color::WHITE);
+    }
+
+    // Draw circle at cursor position
     let Ok(window) = window_q.single() else {
         return;
     };
-    let half_w = window.width() / 2.0;
-    let half_h = window.height() / 2.0;
-
-    let to_gizmo = |px: Vec2| -> Vec2 { Vec2::new(px.x - half_w, half_h - px.y) };
-
-    let converted: Vec<Vec2> = state.points.iter().map(|p| to_gizmo(*p)).collect();
-    gizmos.linestrip_2d(converted.iter().copied(), Color::WHITE);
-
-    // Draw closure target indicator at the start point
-    let start = to_gizmo(state.points[0]);
-    gizmos.circle_2d(
-        Isometry2d::from_translation(start),
-        CLOSURE_DISTANCE,
-        Color::srgba(1.0, 1.0, 1.0, 0.4),
-    );
-
-    // Draw current cursor position
-    if let Some(cursor_pos) = window.cursor_position() {
-        let cursor_gizmo = to_gizmo(cursor_pos);
-        gizmos.circle_2d(
-            Isometry2d::from_translation(cursor_gizmo),
-            4.0,
+    if let Some(cursor_pos) = window.cursor_position()
+        && let Some(cursor_world) = viewport_to_world_point(camera, cam_transform, cursor_pos)
+    {
+        gizmos.sphere(
+            Isometry3d::from_translation(cursor_world),
+            GIZMO_DEPTH * 0.005,
             Color::WHITE,
         );
     }
@@ -263,9 +251,6 @@ fn point_in_polygon(point: Vec2, polygon: &[Vec2]) -> bool {
     inside
 }
 
-fn cleanup_dispel(mut commands: Commands, dispel_cam_q: Query<Entity, With<DispelCamera>>) {
+fn cleanup_dispel(mut commands: Commands) {
     commands.remove_resource::<DispelState>();
-    for entity in &dispel_cam_q {
-        commands.entity(entity).despawn();
-    }
 }
