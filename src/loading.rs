@@ -30,7 +30,7 @@ pub struct TextureAssets {
     pub textbox: Handle<Image>,
     #[asset(path = "textures/unknown.png")]
     pub unknown: Handle<Image>,
-    #[asset(path = "textures/FeatherCursor.png")]
+    #[asset(path = "textures/WhiteFeatherCursor.png")]
     pub feather_cursor: Handle<Image>,
     #[asset(path = "textures/splash.png")]
     pub splash: Handle<Image>,

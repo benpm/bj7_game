@@ -63,7 +63,7 @@ DialogueTrees([
                         responses: [
                         DialogueNode(
                             role: Npc,
-                            text: "No. You could not.",
+                            text: "No.",
                             responses: [],
                         ),
                         ],
@@ -184,6 +184,7 @@ DialogueTrees([
                 DialogueNode(
                     role: Npc,
                     text: "Hahaha.",
+                    win: true,
                     responses: [],
                 ),
                 ],
@@ -205,6 +206,7 @@ DialogueTrees([
                     DialogueNode(
                         role: Player,
                         text: "Mine now.",
+                        win: true,
                         responses: [],
                     ),
                     ],
@@ -254,6 +256,7 @@ DialogueTrees([
                         DialogueNode(
                             role: Npc,
                             text: ".",
+                            win: true,
                             responses: [],
                         ),
                         ],
@@ -286,6 +289,7 @@ DialogueTrees([
                 DialogueNode(
                     role: Npc,
                     text: "YES, ACTUALLY!",
+                    win: true,
                     responses: [],
                 ),
                 ],
@@ -309,8 +313,39 @@ DialogueTrees([
             responses: [
             DialogueNode(
                 role: Player,
-                text: "Is it okay if we don't do that?",
-                responses: [],
+                text: "Good Sir I decline.",
+                responses: [
+                DialogueNode(
+                    role: Npc,
+                    text: "I am discontented but I accept!",
+                    win: true,
+                    responses: [],
+                ),
+                ],
+            ),
+            DialogueNode(
+                role: Player,
+                text: "Good Sir! I accept!",
+                responses: [
+                DialogueNode(
+                    role: Npc,
+                    text: "Noble Knight, you would not \"get it\" anyway!",
+                    responses: [
+                    DialogueNode(
+                        role: Player,
+                        text: "Good Sir, you must first substantiate your claim!",
+                        responses: [
+                        DialogueNode(
+                            role: Npc,
+                            text: "Noble Knight.... I forgot to prepare the riddles...",
+                            win: true,
+                            responses: [],
+                        ),
+                        ],
+                    ),
+                    ],
+                ),
+                ],
             ),
             ],
         ),

@@ -105,12 +105,20 @@ fn setup_world(
             });
     }
 
-    // Spawn a 10x10 grid of tall, thin black cylinders
+    // Spawn a 10x10 grid of tall, thin black cylinders with randomized size and position
     for x in 0..10 {
         for z in 0..10 {
-            let position = Vec3::new(x as f32 * 2.0 - 9.0, 5.0, z as f32 * 2.0 - 9.0);
+            let x_offset = rand::random::<f32>() * 1.5 - 0.75;
+            let z_offset = rand::random::<f32>() * 1.5 - 0.75;
+            let height = rand::random::<f32>() * 80.0 + 4.0; // 4-12 units tall
+            let radius = rand::random::<f32>() * 0.08 + 0.05; // 0.05-0.13 radius
+            let position = Vec3::new(
+                x as f32 * 2.0 - 9.0 + x_offset,
+                height / 2.0,
+                z as f32 * 2.0 - 9.0 + z_offset,
+            );
             commands.spawn((
-                Mesh3d(meshes.add(Cylinder::new(0.1, 10.0))),
+                Mesh3d(meshes.add(Cylinder::new(radius, height))),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: Color::srgb(0.15, 0.15, 0.15),
                     perceptual_roughness: 0.9,

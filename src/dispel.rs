@@ -28,6 +28,10 @@ impl Plugin for DispelPlugin {
                     .chain()
                     .run_if(in_state(GameState::Playing).and(game_not_paused).and(dialog_not_active)),
             )
+            .add_systems(
+                Update,
+                cancel_dispel_on_keypress.run_if(in_state(GameState::Playing)),
+            )
             .add_systems(OnExit(GameState::Playing), cleanup_dispel);
     }
 }
@@ -59,6 +63,18 @@ impl Default for DispelState {
             points: Vec::new(),
             segment_timer: Timer::from_seconds(SEGMENT_INTERVAL, TimerMode::Repeating),
         }
+    }
+}
+
+fn cancel_dispel_on_keypress(
+    mut commands: Commands,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut state: ResMut<DispelState>,
+    mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
+    window_entity_q: Query<Entity, With<PrimaryWindow>>,
+) {
+    if state.active && keyboard.get_just_pressed().len() > 0 {
+        deactivate_dispel(&mut commands, &mut state, &mut cursor_q, &window_entity_q);
     }
 }
 

@@ -68,7 +68,7 @@ fn spawn_player(mut commands: Commands, canvas: Res<CanvasImage>) {
             parent.spawn((
                 PointLight {
                     intensity: 50_000.0,
-                    range: 100.0,
+                    range: 200.0,
                     shadows_enabled: false,
                     ..default()
                 },
