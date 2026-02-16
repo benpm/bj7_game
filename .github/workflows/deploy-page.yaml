@@ -1,40 +1,100 @@
 name: deploy-github-page
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GAME_EXECUTABLE_NAME: bevy_game
 
 jobs:
   build-web:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-      - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev
-      - name: Install trunk
-        uses: jetli/trunk-action@v0.4.0
+          targets: wasm32-unknown-unknown
+
+      - uses: actions/cache@v4
         with:
-          version: 'latest'
-      - name: Add wasm target
-        run: |
-          rustup target add wasm32-unknown-unknown
-      - name: Build Release
-        run: |
-          trunk build --release
-      - name: optimize Wasm
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: wasm-cargo-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Install Dependencies
+        run: sudo apt-get update; sudo apt-get install g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev libxkbcommon-dev
+
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli --version 0.2.108
+
+      - name: Build web release
+        run: cargo build --profile web-release --target wasm32-unknown-unknown --no-default-features
+
+      - name: Generate wasm bindings
+        run: wasm-bindgen --out-dir dist --target web target/wasm32-unknown-unknown/web-release/${{ env.GAME_EXECUTABLE_NAME }}.wasm
+
+      - name: Optimize wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:
           file: dist/*.wasm
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4.2.5
+
+      - name: Create index.html
+        run: |
+          cat > dist/index.html << 'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>BJ7</title>
+              <style>
+                  body { margin: 0; background: #000; overflow: hidden; }
+                  canvas { display: block; width: 100vw; height: 100vh; }
+              </style>
+          </head>
+          <body>
+              <script type="module">
+                  import init from './bevy_game.js';
+                  init();
+              </script>
+          </body>
+          </html>
+          HTMLEOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages
-          folder: dist
+          path: dist
+
+  deploy:
+    needs: build-web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
