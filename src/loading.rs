@@ -28,4 +28,6 @@ pub struct TextureAssets {
     pub github: Handle<Image>,
     #[asset(path = "textures/textbox9x9.png")]
     pub textbox: Handle<Image>,
+    #[asset(path = "textures/unknown.png")]
+    pub unknown: Handle<Image>,
 }

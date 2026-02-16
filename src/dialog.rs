@@ -25,6 +25,7 @@ impl Plugin for DialogPlugin {
                     manage_dialog_ui,
                     manage_prompt_ui,
                     response_button_hover,
+                    animate_response_buttons,
                 )
                     .chain()
                     .run_if(in_state(GameState::Playing).and(game_not_paused)),
@@ -97,6 +98,14 @@ struct ResponseContainer;
 /// Index into the current node's `responses` array.
 #[derive(Component)]
 struct ResponseButton(usize);
+
+/// Animates a response button from 0 to full height over RESPONSE_ANIM_SECS.
+#[derive(Component)]
+struct ResponseButtonAnim {
+    timer: Timer,
+}
+
+const RESPONSE_ANIM_SECS: f32 = 1.0;
 
 #[derive(Component)]
 struct PromptUi;
@@ -322,6 +331,8 @@ fn manage_dialog_ui(
                                         Val::Px(8.0),
                                         Val::Px(8.0),
                                     ),
+                                    height: Val::Px(0.0),
+                                    overflow: Overflow::clip(),
                                     ..default()
                                 },
                                 ImageNode {
@@ -335,6 +346,12 @@ fn manage_dialog_ui(
                                     ..default()
                                 },
                                 ResponseButton(*original_idx),
+                                ResponseButtonAnim {
+                                    timer: Timer::from_seconds(
+                                        RESPONSE_ANIM_SECS,
+                                        TimerMode::Once,
+                                    ),
+                                },
                             ))
                             .with_child((
                                 Text::new(text),
@@ -389,51 +406,92 @@ fn spawn_dialog_box(
             DialogUi,
         ))
         .with_children(|parent| {
-            // NPC text box
+            // Row: NPC portrait + text box
             parent
-                .spawn((
-                    Node {
-                        width: Val::Percent(80.0),
-                        min_height: Val::Px(80.0),
-                        padding: UiRect::all(Val::Px(16.0)),
-                        ..default()
-                    },
-                    ImageNode {
-                        image: textures.textbox.clone(),
-                        image_mode: NodeImageMode::Sliced(TextureSlicer {
-                            border: BorderRect::all(16.0),
-                            center_scale_mode: SliceScaleMode::Stretch,
-                            sides_scale_mode: SliceScaleMode::Stretch,
-                            max_corner_scale: 1.0,
-                        }),
-                        ..default()
-                    },
-                ))
-                .with_child((
-                    Text::new(""),
-                    TextFont {
-                        font,
-                        font_size: 32.0,
-                        font_smoothing: FontSmoothing::None,
-                        ..default()
-                    },
-                    TextColor(Color::WHITE),
-                    TextSimpleAnimator::new(&node.text, TEXT_SPEED),
-                    DialogText,
-                ));
+                .spawn(Node {
+                    width: Val::Percent(80.0),
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::FlexEnd,
+                    column_gap: Val::Px(8.0),
+                    ..default()
+                })
+                .with_children(|row| {
+                    // NPC portrait
+                    row.spawn((
+                        Node {
+                            width: Val::Px(64.0),
+                            height: Val::Px(64.0),
+                            ..default()
+                        },
+                        ImageNode {
+                            image: textures.unknown.clone(),
+                            ..default()
+                        },
+                    ));
 
-            // Response button container (initially empty)
+                    // NPC text box
+                    row.spawn((
+                        Node {
+                            flex_grow: 1.0,
+                            min_height: Val::Px(80.0),
+                            padding: UiRect::all(Val::Px(16.0)),
+                            ..default()
+                        },
+                        ImageNode {
+                            image: textures.textbox.clone(),
+                            image_mode: NodeImageMode::Sliced(TextureSlicer {
+                                border: BorderRect::all(16.0),
+                                center_scale_mode: SliceScaleMode::Stretch,
+                                sides_scale_mode: SliceScaleMode::Stretch,
+                                max_corner_scale: 1.0,
+                            }),
+                            ..default()
+                        },
+                    ))
+                    .with_child((
+                        Text::new(""),
+                        TextFont {
+                            font,
+                            font_size: 32.0,
+                            font_smoothing: FontSmoothing::None,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextSimpleAnimator::new(&node.text, TEXT_SPEED),
+                        DialogText,
+                    ));
+                });
+
+            // Response button container (initially empty, indented)
             parent.spawn((
                 Node {
                     width: Val::Percent(80.0),
                     flex_direction: FlexDirection::Column,
                     row_gap: Val::Px(4.0),
                     margin: UiRect::top(Val::Px(8.0)),
+                    padding: UiRect::left(Val::Px(72.0)),
                     ..default()
                 },
                 ResponseContainer,
             ));
         });
+}
+
+fn animate_response_buttons(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Node, &mut ResponseButtonAnim)>,
+) {
+    for (entity, mut node, mut anim) in &mut query {
+        anim.timer.tick(time.delta());
+        let t = anim.timer.fraction();
+        // Animate from 0 to Auto height using scale factor on a max height
+        node.height = Val::Px(t * 48.0);
+        if t >= 1.0 {
+            node.height = Val::Auto;
+            commands.entity(entity).remove::<ResponseButtonAnim>();
+        }
+    }
 }
 
 fn response_button_hover(

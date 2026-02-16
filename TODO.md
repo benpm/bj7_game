@@ -1,19 +1,19 @@
 # TODO
 
-> Do these in written order. Pull and make commit (don't push) before moving on to next task. Iterate until there are no tasks left. Check them off as you go, moving them to [done](#done). If anything is unclear, add questions for USER to answer in [Questions](#questions)
+> Do these in written order. Pull, commit, and push before moving on to next task. Iterate until there are no tasks left. Check them off as you go, moving them to [done](#done). If anything is unclear, add questions for USER to answer in [Questions](#questions)
 
 ## Ready
 
 > These are ready for work, probably.
 
-- [ ] Configure and test the CI pipeline for web deployment. It should run on every commit.
-
+- [ ] The camera remains locked after dialog is complete, fix this
+- [ ] Use `FeatherCursor.png` as the mouse cursor image when in dispel mode.
+- [ ] In the main menu, show the `splash.png` texture, tiled, in the background. 
 
 
 ## WIP
 
 > These are WIP and should not be worked on until moved to [done](#done)
-
 
 
 
@@ -23,6 +23,8 @@
 
 ## Done
 
+- [x] Indent response buttons, NPC portrait next to text box, animated button height grow-in
+- [x] Configure and test the CI pipeline for web deployment. It should run on every commit.
 - [x] NPC billboard sprites from .ron config, aberration size property configurable in types.ron
 - [x] Recursive dialog tree from `assets/defs/dialog.ron` with Player response buttons, cursor management, hover effects
 - [x] Set the bevy `UiScale` to 2
