@@ -1,7 +1,7 @@
 use crate::GameState;
 use crate::environment::{Environment, RunTimer};
 use crate::health::Health;
-use crate::loading::FontAssets;
+use crate::loading::{FontAssets, TextureAssets};
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
@@ -40,6 +40,15 @@ struct PauseExit;
 #[derive(Component)]
 struct PauseStatText;
 
+fn textbox_slicer() -> TextureSlicer {
+    TextureSlicer {
+        border: BorderRect::all(16.0),
+        center_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Stretch,
+        max_corner_scale: 1.0,
+    }
+}
+
 fn init_paused(mut commands: Commands) {
     commands.insert_resource(Paused(false));
 }
@@ -71,10 +80,10 @@ fn manage_pause_menu(
     run_timer: Option<Res<RunTimer>>,
     environment: Option<Res<State<Environment>>>,
     fonts: Res<FontAssets>,
+    textures: Res<TextureAssets>,
 ) {
     let font = fonts.main.clone();
     if !paused.is_changed() {
-        // Update stats text if paused
         return;
     }
 
@@ -85,6 +94,16 @@ fn manage_pause_menu(
         let minutes = (elapsed / 60.0) as u32;
         let seconds = (elapsed % 60.0) as u32;
 
+        let textfont = TextFont {
+            font: font.clone(),
+            font_size: 32.0,
+            font_smoothing: FontSmoothing::None,
+            ..default()
+        };
+
+        let textbox_image = textures.textbox.clone();
+
+        // Fullscreen dimmed overlay
         commands
             .spawn((
                 Node {
@@ -101,93 +120,109 @@ fn manage_pause_menu(
                 PauseMenu,
             ))
             .with_children(|parent| {
-                // Title
-                parent.spawn((
-                    Text::new("PAUSED"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 64.0,
-                        font_smoothing: FontSmoothing::None,
-                        ..default()
-                    },
-                    TextColor(Color::WHITE),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(30.0)),
-                        ..default()
-                    },
-                ));
-
-                // Stats
-                let stats = format!(
-                    "Sanity: {:.0}%\nEnvironment: {}\nTime: {}:{:02}",
-                    health_pct, env_name, minutes, seconds
-                );
-                parent.spawn((
-                    Text::new(stats),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 16.0,
-                        font_smoothing: FontSmoothing::None,
-                        ..default()
-                    },
-                    TextColor(Color::srgba(0.8, 0.8, 0.8, 1.0)),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(40.0)),
-                        ..default()
-                    },
-                    PauseStatText,
-                ));
-
-                // Continue button
+                // Modal box using 9-slice textbox
                 parent
                     .spawn((
-                        Button,
                         Node {
-                            width: Val::Px(200.0),
-                            height: Val::Px(50.0),
-                            justify_content: JustifyContent::Center,
+                            flex_direction: FlexDirection::Column,
                             align_items: AlignItems::Center,
-                            margin: UiRect::bottom(Val::Px(10.0)),
+                            justify_content: JustifyContent::Center,
+                            padding: UiRect::all(Val::Px(30.0)),
                             ..default()
                         },
-                        BackgroundColor(Color::linear_rgb(0.15, 0.15, 0.15)),
-                        PauseContinue,
+                        ImageNode {
+                            image: textbox_image.clone(),
+                            image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                            ..default()
+                        },
                     ))
-                    .with_child((
-                        Text::new("Continue"),
-                        TextFont {
-                            font: font.clone(),
-                            font_size: 32.0,
-                            font_smoothing: FontSmoothing::None,
-                            ..default()
-                        },
-                        TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
-                    ));
+                    .with_children(|modal| {
+                        // Title
+                        modal.spawn((
+                            Text::new("PAUSED"),
+                            TextFont {
+                                font: font.clone(),
+                                font_size: 64.0,
+                                font_smoothing: FontSmoothing::None,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                            Node {
+                                margin: UiRect::bottom(Val::Px(20.0)),
+                                ..default()
+                            },
+                        ));
 
-                // Exit to Menu button
-                parent
-                    .spawn((
-                        Button,
-                        Node {
-                            width: Val::Px(200.0),
-                            height: Val::Px(50.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::linear_rgb(0.15, 0.15, 0.15)),
-                        PauseExit,
-                    ))
-                    .with_child((
-                        Text::new("Exit to Menu"),
-                        TextFont {
-                            font: font.clone(),
-                            font_size: 32.0,
-                            font_smoothing: FontSmoothing::None,
-                            ..default()
-                        },
-                        TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
-                    ));
+                        // Stats
+                        let stats = format!(
+                            "Sanity: {:.0}%\nEnvironment: {}\nTime: {}:{:02}",
+                            health_pct, env_name, minutes, seconds
+                        );
+                        modal.spawn((
+                            Text::new(stats),
+                            TextFont {
+                                font: font.clone(),
+                                font_size: 16.0,
+                                font_smoothing: FontSmoothing::None,
+                                ..default()
+                            },
+                            TextColor(Color::srgba(0.8, 0.8, 0.8, 1.0)),
+                            Node {
+                                margin: UiRect::bottom(Val::Px(30.0)),
+                                ..default()
+                            },
+                            PauseStatText,
+                        ));
+
+                        // Continue button
+                        modal
+                            .spawn((
+                                Button,
+                                Node {
+                                    width: Val::Px(200.0),
+                                    height: Val::Px(50.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    margin: UiRect::bottom(Val::Px(10.0)),
+                                    ..default()
+                                },
+                                ImageNode {
+                                    image: textbox_image.clone(),
+                                    image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                                    ..default()
+                                },
+                                PauseContinue,
+                            ))
+                            .with_child((
+                                Text::new("Continue"),
+                                textfont.clone(),
+                                TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
+                            ));
+
+                        // Exit to Menu button
+                        modal
+                            .spawn((
+                                Button,
+                                Node {
+                                    width: Val::Px(200.0),
+                                    height: Val::Px(50.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                ImageNode {
+                                    image: textbox_image.clone(),
+                                    image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                                    ..default()
+                                },
+                                PauseExit,
+                            ))
+                            .with_child((
+                                Text::new("Exit to Menu"),
+                                textfont.clone(),
+                                TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
+                            ));
+                    });
             });
     } else if !paused.0 {
         for entity in &menu_query {

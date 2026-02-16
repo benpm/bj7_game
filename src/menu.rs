@@ -7,8 +7,6 @@ use bevy::text::FontSmoothing;
 
 pub struct MenuPlugin;
 
-/// This plugin is responsible for the game menu (containing only one button...)
-/// The menu is only drawn during the State `GameState::Menu` and is removed when that state is exited
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Menu), setup_menu)
@@ -18,22 +16,17 @@ impl Plugin for MenuPlugin {
 }
 
 #[derive(Component)]
-struct ButtonColors {
-    normal: Color,
-    hovered: Color,
-}
+struct Menu;
 
-impl Default for ButtonColors {
-    fn default() -> Self {
-        ButtonColors {
-            normal: Color::linear_rgb(0.15, 0.15, 0.15),
-            hovered: Color::linear_rgb(0.25, 0.25, 0.25),
-        }
+/// Helper to create the 9-slice slicer for the textbox texture (48x48, 16px border).
+fn textbox_slicer() -> TextureSlicer {
+    TextureSlicer {
+        border: BorderRect::all(16.0),
+        center_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Stretch,
+        max_corner_scale: 1.0,
     }
 }
-
-#[derive(Component)]
-struct Menu;
 
 fn setup_menu(
     mut commands: Commands,
@@ -62,6 +55,8 @@ fn setup_menu(
         ..default()
     };
 
+    let textbox_image = textures.textbox.clone();
+
     commands
         .spawn((
             Node {
@@ -75,7 +70,7 @@ fn setup_menu(
             Menu,
         ))
         .with_children(|children| {
-            let button_colors = ButtonColors::default();
+            // Play button
             children
                 .spawn((
                     Button,
@@ -84,10 +79,13 @@ fn setup_menu(
                         height: Val::Px(50.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        ..Default::default()
+                        ..default()
                     },
-                    BackgroundColor(button_colors.normal),
-                    button_colors,
+                    ImageNode {
+                        image: textbox_image.clone(),
+                        image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                        ..default()
+                    },
                     ChangeState(GameState::Playing),
                 ))
                 .with_child((
@@ -95,7 +93,7 @@ fn setup_menu(
                     textfont.clone(),
                     TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                 ));
-            let button_colors = ButtonColors::default();
+            // Exit button
             children
                 .spawn((
                     Button,
@@ -105,10 +103,13 @@ fn setup_menu(
                         margin: UiRect::top(Val::Px(10.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        ..Default::default()
+                        ..default()
                     },
-                    BackgroundColor(button_colors.normal),
-                    button_colors,
+                    ImageNode {
+                        image: textbox_image.clone(),
+                        image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                        ..default()
+                    },
                     ExitApp,
                 ))
                 .with_child((
@@ -140,11 +141,6 @@ fn setup_menu(
                         justify_content: JustifyContent::SpaceAround,
                         align_items: AlignItems::Center,
                         padding: UiRect::all(Val::Px(5.)),
-                        ..Default::default()
-                    },
-                    BackgroundColor(Color::NONE),
-                    ButtonColors {
-                        normal: Color::NONE,
                         ..default()
                     },
                     OpenLink("https://bevyengine.org"),
@@ -176,11 +172,6 @@ fn setup_menu(
                         align_items: AlignItems::Center,
                         padding: UiRect::all(Val::Px(5.)),
                         ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                    ButtonColors {
-                        normal: Color::NONE,
-                        hovered: Color::linear_rgb(0.25, 0.25, 0.25),
                     },
                     OpenLink("https://github.com/NiklasEi/bevy_game_template"),
                 ))
@@ -216,8 +207,7 @@ fn click_play_button(
     mut interaction_query: Query<
         (
             &Interaction,
-            &mut BackgroundColor,
-            &ButtonColors,
+            Option<&mut ImageNode>,
             Option<&ChangeState>,
             Option<&OpenLink>,
             Option<&ExitApp>,
@@ -225,9 +215,7 @@ fn click_play_button(
         (Changed<Interaction>, With<Button>),
     >,
 ) {
-    for (interaction, mut color, button_colors, change_state, open_link, exit_app) in
-        &mut interaction_query
-    {
+    for (interaction, image_node, change_state, open_link, exit_app) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 if let Some(state) = change_state {
@@ -241,10 +229,14 @@ fn click_play_button(
                 }
             }
             Interaction::Hovered => {
-                *color = button_colors.hovered.into();
+                if let Some(mut img) = image_node {
+                    img.color = Color::linear_rgb(0.6, 0.6, 0.6);
+                }
             }
             Interaction::None => {
-                *color = button_colors.normal.into();
+                if let Some(mut img) = image_node {
+                    img.color = Color::WHITE;
+                }
             }
         }
     }

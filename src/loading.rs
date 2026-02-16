@@ -36,4 +36,6 @@ pub struct TextureAssets {
         collection(typed)
     )]
     pub aberrations: Vec<Handle<Image>>,
+    #[asset(path = "textures/textbox9x9.png")]
+    pub textbox: Handle<Image>,
 }
