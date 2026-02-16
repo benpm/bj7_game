@@ -4,8 +4,13 @@ use crate::dialog::Npc;
 use crate::pause::game_not_paused;
 use crate::player::Player;
 use bevy::asset::RenderAssetUsages;
-use bevy::mesh::{Indices, PrimitiveTopology};
+use bevy::mesh::{Indices, MeshVertexBufferLayoutRef, PrimitiveTopology};
+use bevy::pbr::{MaterialPipeline, MaterialPipelineKey};
 use bevy::prelude::*;
+use bevy::render::render_resource::{
+    AsBindGroup, RenderPipelineDescriptor, SpecializedMeshPipelineError,
+};
+use bevy::shader::ShaderRef;
 use rand::Rng;
 use serde::Deserialize;
 
@@ -25,11 +30,39 @@ const MAX_SHAKE_INTENSITY: f32 = 0.3;
 
 const ABERRATION_TYPES_RON: &str = include_str!("../assets/defs/types.ron");
 
+#[derive(Asset, TypePath, AsBindGroup, Clone)]
+struct AberrationMaterial {
+    #[texture(0)]
+    #[sampler(1)]
+    base_texture: Option<Handle<Image>>,
+}
+
+impl Material for AberrationMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/aberration_distort.wgsl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Mask(0.5)
+    }
+
+    fn specialize(
+        _pipeline: &MaterialPipeline,
+        descriptor: &mut RenderPipelineDescriptor,
+        _layout: &MeshVertexBufferLayoutRef,
+        _key: MaterialPipelineKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.primitive.cull_mode = None;
+        Ok(())
+    }
+}
+
 pub struct AberrationPlugin;
 
 impl Plugin for AberrationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), init_aberrations)
+        app.add_plugins(MaterialPlugin::<AberrationMaterial>::default())
+            .add_systems(OnEnter(GameState::Playing), init_aberrations)
             .add_systems(
                 Update,
                 (
@@ -185,7 +218,7 @@ fn spawn_aberration_periodic(
     mut spawn_timer: ResMut<AberrationSpawnTimer>,
     types: Res<AberrationTypes>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<AberrationMaterial>>,
     aberration_query: Query<(), With<Aberration>>,
     player_query: Query<(&Transform, &Actor), With<Player>>,
 ) {
@@ -248,12 +281,8 @@ fn spawn_aberration_periodic(
                 let quad = meshes.add(sprite_frame_quad(type_def.size, type_def.size, layer.columns, frame));
                 parent.spawn((
                     Mesh3d(quad),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color_texture: Some(layer.texture.clone()),
-                        alpha_mode: AlphaMode::Mask(0.5),
-                        unlit: true,
-                        cull_mode: None,
-                        ..default()
+                    MeshMaterial3d(materials.add(AberrationMaterial {
+                        base_texture: Some(layer.texture.clone()),
                     })),
                     Transform::from_xyz(0.0, 0.0, i as f32 * 0.01),
                 ));

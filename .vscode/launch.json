@@ -6,16 +6,12 @@
     "configurations": [
         // Use this configuration to debug your Rust code with LLDB
         {
-            "type"    : "lldb",
-            "request" : "launch",
-            "cwd"     : "${workspaceFolder}",
-            "name"    : "Debug",
-            "cargo"   : {
-                "args"  : ["run", "--bin=bevy_game", "--package=bevy_game"],
-                "filter": {"name": "bevy_game", "kind": "bin"}
-            },
-            "terminal": "integrated",
-            "console" : "integratedTerminal"
+            "type"           : "lldb",
+            "request"        : "launch",
+            "name"           : "Debug",
+            "sourceLanguages": ["rust"],
+            "cwd"            : "${workspaceFolder}",
+            "cargo"          : { "args": ["run"], "problemMatcher": "$rustc", "cwd": "${workspaceFolder}" }
         }
     ]
 }

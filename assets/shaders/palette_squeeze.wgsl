@@ -2,9 +2,9 @@
 
 const DITHER: bool = true;
 const DOWN_SCALE: f32 = 1.0;
-const PALETTE_SIZE: i32 = 3;
+const PALETTE_SIZE: i32 = 4;
 const HIGHLIGHT_SIZE: i32 = 5;
-const HIGHLIGHT_THRESHOLD: f32 = 0.15;
+const HIGHLIGHT_THRESHOLD: f32 = 0.01;
 
 struct PaletteSqueeze {
     resolution: vec3f,
@@ -18,8 +18,9 @@ struct PaletteSqueeze {
 @group(0) @binding(3) var noise_tex: texture_2d<f32>;
 @group(0) @binding(4) var noise_samp: sampler;
 
-const palette = array<vec3f, 3>(
+const palette = array<vec3f, 4>(
     vec3f(0.000, 0.000, 0.000),
+    vec3f(0.100, 0.100, 0.100),
     vec3f(0.278, 0.278, 0.278),
     vec3f(1.000, 1.000, 1.000),
 );
@@ -71,18 +72,14 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4f {
     let pixel = fc / DOWN_SCALE;
 
     let screen_color = textureSample(screen_texture, texture_sampler, in.uv).rgb;
-    let incolor = mix(screen_color, vec3f(0.0), u.darken);
+    let incolor = mix(screen_color.rgb, vec3f(0.0), u.darken);
 
     // Check if input color is near any highlight — pass through directly
     let highlight = check_highlight(incolor);
     if highlight.a > 0.5 {
         return highlight;
+    } else {
+        let color = get_dithered_palette(dot(incolor, vec3f(0.299, 0.587, 0.114)), pixel);
+        return vec4f(color, 1.0);
     }
-
-    // Otherwise apply grayscale palette quantization
-    let luminance = dot(incolor, vec3f(0.2126, 0.7152, 0.0722));
-    let darkened = luminance * (1.0 - u.darken);
-
-    let color = get_dithered_palette(darkened, pixel);
-    return vec4f(color, 1.0);
 }

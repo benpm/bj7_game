@@ -17,8 +17,7 @@ impl Plugin for WorldPlugin {
         app.add_systems(OnEnter(GameState::Playing), setup_world)
             .add_systems(
                 Update,
-                npc_sprite_face_player
-                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
+                npc_sprite_face_player.run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_world);
     }
@@ -55,9 +54,9 @@ fn setup_world(
 ) {
     // Ground plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(1000.0, 1000.0))),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.0, 0.0, 0.0),
+            base_color: Color::srgb(0.15, 0.15, 0.15),
             perceptual_roughness: 0.9,
             ..default()
         })),
@@ -68,7 +67,7 @@ fn setup_world(
     let npc_data: NpcsRon = ron::from_str(NPCS_RON).expect("Failed to parse npcs.ron");
     let cube_mesh = meshes.add(Cuboid::new(0.6, NPC_CUBE_HEIGHT, 0.6));
     let cube_material = materials.add(StandardMaterial {
-        base_color: Color::srgb(0.8, 0.8, 0.8),
+        base_color: Color::srgb(1.0, 1.0, 1.0),
         emissive: bevy::color::LinearRgba::new(0.3, 0.3, 0.3, 1.0),
         ..default()
     });
@@ -113,7 +112,8 @@ fn setup_world(
             commands.spawn((
                 Mesh3d(meshes.add(Cylinder::new(0.1, 10.0))),
                 MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.0, 0.0, 0.0),
+                    base_color: Color::srgb(0.15, 0.15, 0.15),
+                    perceptual_roughness: 0.9,
                     ..default()
                 })),
                 Transform::from_translation(position),
