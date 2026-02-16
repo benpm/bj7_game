@@ -6,12 +6,6 @@
 
 > These are ready for work, probably.
 
-- [ ] Create a simple RPG-style dialog system. 
-  - Use `bevy_text_animation` to animate the text displayed on screen
-  - Embed the dialogs/dialog_tree.ron file using bevy asset embedding crate
-  - Create an NPC trait that allows pressing E when player near, opening dialog UI
-- [ ] `assets\textures\BaseAnimAberrationSheet.png` is a sprite sheet containing 3 cells, in a row. Instead of drawing the aberration as a single billboard, draw  `GreenFace.png` (4 cell sheet) as a layer on top of that base layer. Allow aberrations to be any number of layers. Allow aberrations to be defined by .ron files that should also be embedded.
-- [ ] Set the bevy `UiScale` to 2
 
 
 
@@ -27,6 +21,9 @@
 
 ## Done
 
+- [x] Set the bevy `UiScale` to 2
+- [x] Layered sprite sheet aberrations defined by .ron files (BaseAnimAberrationSheet + GreenFace overlay)
+- [x] RPG-style dialog system with bevy_text_animation, embedded dialog_tree.ron, NPC interaction with E key
 - [x] Use 9-slice textbox texture for buttons and pause menu modal
 - [x] Add a point light source to the player
 - [x] Separate out the transition logic from environment.rs into a new struct, allowing scene transitions to be triggered independently

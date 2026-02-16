@@ -47,7 +47,9 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<GameState>().add_plugins((
+        app.insert_resource(UiScale(2.0))
+            .init_state::<GameState>()
+            .add_plugins((
             ScalingPlugin,
             LoadingPlugin,
             MenuPlugin,
