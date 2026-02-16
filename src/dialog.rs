@@ -1,10 +1,11 @@
 use crate::GameState;
-use crate::loading::{FontAssets, TextureAssets};
+use crate::loading::{AudioAssets, FontAssets, TextureAssets};
 use crate::pause::game_not_paused;
 use crate::player::Player;
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
+use bevy_kira_audio::{Audio, AudioControl};
 use bevy_text_animation::{TextAnimationFinished, TextAnimatorPlugin, TextSimpleAnimator};
 use rand::Rng;
 use serde::Deserialize;
@@ -228,6 +229,8 @@ fn handle_response_click(
     mut state: ResMut<DialogState>,
     interaction_q: Query<(&Interaction, &ResponseButton), Changed<Interaction>>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     if !state.active {
         return;
@@ -237,6 +240,8 @@ fn handle_response_click(
         if *interaction != Interaction::Pressed {
             continue;
         }
+
+        audio.play(audio_assets.fx1.clone());
 
         let Some(ref node) = state.current_node else {
             continue;
@@ -307,6 +312,8 @@ fn manage_dialog_ui(
     response_container_q: Query<(Entity, Option<&Children>), With<ResponseContainer>>,
     fonts: Res<FontAssets>,
     textures: Res<TextureAssets>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     if !state.dirty {
         return;
@@ -329,6 +336,7 @@ fn manage_dialog_ui(
     if dialog_q.is_empty() {
         // Spawn dialog box
         spawn_dialog_box(&mut commands, &node, &fonts, &textures);
+        audio.play(audio_assets.talk.clone());
     } else if state.anim_done && !state.responses_shown {
         // Show response buttons
         let player_responses: Vec<(usize, String)> = node
@@ -396,6 +404,7 @@ fn manage_dialog_ui(
         }
     } else if !state.anim_done {
         // New NPC line — update text and clear response buttons
+        audio.play(audio_assets.talk.clone());
         for entity in &text_q {
             commands
                 .entity(entity)

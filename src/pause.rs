@@ -1,10 +1,11 @@
 use crate::GameState;
 use crate::environment::{Environment, RunTimer};
 use crate::health::Health;
-use crate::loading::{FontAssets, TextureAssets};
+use crate::loading::{AudioAssets, FontAssets, TextureAssets};
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
+use bevy_kira_audio::{Audio, AudioControl};
 
 pub struct PausePlugin;
 
@@ -237,9 +238,12 @@ fn handle_pause_buttons(
     continue_q: Query<&Interaction, (Changed<Interaction>, With<PauseContinue>)>,
     exit_q: Query<&Interaction, (Changed<Interaction>, With<PauseExit>)>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     for interaction in &continue_q {
         if *interaction == Interaction::Pressed {
+            audio.play(audio_assets.fx1.clone());
             paused.0 = false;
             if let Ok(mut cursor) = cursor_q.single_mut() {
                 cursor.grab_mode = CursorGrabMode::Locked;
@@ -249,6 +253,7 @@ fn handle_pause_buttons(
     }
     for interaction in &exit_q {
         if *interaction == Interaction::Pressed {
+            audio.play(audio_assets.fx1.clone());
             paused.0 = false;
             next_state.set(GameState::Menu);
         }

@@ -3,6 +3,7 @@
 mod aberration;
 mod actions;
 pub mod actor;
+pub mod audio;
 mod death;
 mod dialog;
 mod dispel;
@@ -20,6 +21,7 @@ mod world;
 use crate::aberration::AberrationPlugin;
 use crate::actions::ActionsPlugin;
 use crate::actor::ActorPlugin;
+use crate::audio::GameAudioPlugin;
 use crate::death::DeathPlugin;
 use crate::dialog::DialogPlugin;
 use crate::dispel::DispelPlugin;
@@ -53,6 +55,7 @@ impl Plugin for GamePlugin {
             .init_state::<GameState>()
             .add_plugins((
                 ScalingPlugin,
+                GameAudioPlugin,
                 LoadingPlugin,
                 MenuPlugin,
                 ActionsPlugin,

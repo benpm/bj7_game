@@ -1,9 +1,10 @@
 use crate::GameState;
 use crate::environment::RunTimer;
-use crate::loading::{FontAssets, TextureAssets};
+use crate::loading::{AudioAssets, FontAssets, TextureAssets};
 use crate::pause::Paused;
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
+use bevy_kira_audio::{Audio, AudioControl};
 
 pub struct DeathPlugin;
 
@@ -46,10 +47,14 @@ fn show_death_screen(
     textures: Res<TextureAssets>,
     run_timer: Option<Res<RunTimer>>,
     mut paused: ResMut<Paused>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     if dead.is_none() || !existing.is_empty() {
         return;
     }
+
+    audio.play(audio_assets.death.clone());
 
     // Freeze gameplay
     paused.0 = true;
@@ -139,9 +144,12 @@ fn show_death_screen(
 fn handle_death_button(
     mut next_state: ResMut<NextState<GameState>>,
     query: Query<&Interaction, (Changed<Interaction>, With<DeathReturnButton>)>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     for interaction in &query {
         if *interaction == Interaction::Pressed {
+            audio.play(audio_assets.fx1.clone());
             next_state.set(GameState::Menu);
         }
     }

@@ -1,16 +1,22 @@
 use crate::GameState;
-use crate::loading::{FontAssets, TextureAssets};
+use crate::audio::GameVolume;
+use crate::loading::{AudioAssets, FontAssets, TextureAssets};
 use crate::palette::PaletteSqueeze;
 use crate::scaling::CanvasImage;
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
+use bevy_kira_audio::{Audio, AudioControl};
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Menu), setup_menu)
-            .add_systems(Update, click_play_button.run_if(in_state(GameState::Menu)))
+            .add_systems(
+                Update,
+                (click_play_button, handle_volume_buttons)
+                    .run_if(in_state(GameState::Menu)),
+            )
             .add_systems(OnExit(GameState::Menu), cleanup_menu);
     }
 }
@@ -33,6 +39,7 @@ fn setup_menu(
     textures: Res<TextureAssets>,
     fonts: Res<FontAssets>,
     canvas: Res<CanvasImage>,
+    vol: Res<GameVolume>,
 ) {
     let font = fonts.main.clone();
     info!("menu");
@@ -115,6 +122,81 @@ fn setup_menu(
                     textfont.clone(),
                     TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                 ));
+            // Volume row
+            children
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::top(Val::Px(10.0)),
+                    column_gap: Val::Px(4.0),
+                    ..default()
+                })
+                .with_children(|row| {
+                    // Minus button
+                    row.spawn((
+                        Button,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        ImageNode {
+                            image: textbox_image.clone(),
+                            image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                            ..default()
+                        },
+                        VolumeDown,
+                    ))
+                    .with_child((
+                        Text::new("-"),
+                        textfont.clone(),
+                        TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
+                    ));
+                    // Volume display
+                    row.spawn((
+                        Node {
+                            width: Val::Px(80.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        ImageNode {
+                            image: textbox_image.clone(),
+                            image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                            ..default()
+                        },
+                    ))
+                    .with_child((
+                        Text::new(format!("{:.0}%", vol.0 * 100.0)),
+                        textfont.clone(),
+                        TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
+                        VolumeDisplay,
+                    ));
+                    // Plus button
+                    row.spawn((
+                        Button,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        ImageNode {
+                            image: textbox_image.clone(),
+                            image_mode: NodeImageMode::Sliced(textbox_slicer()),
+                            ..default()
+                        },
+                        VolumeUp,
+                    ))
+                    .with_child((
+                        Text::new("+"),
+                        textfont.clone(),
+                        TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
+                    ));
+                });
             // Exit button
             children
                 .spawn((
@@ -223,6 +305,15 @@ struct OpenLink(&'static str);
 #[derive(Component)]
 struct ExitApp;
 
+#[derive(Component)]
+struct VolumeUp;
+
+#[derive(Component)]
+struct VolumeDown;
+
+#[derive(Component)]
+struct VolumeDisplay;
+
 fn click_play_button(
     mut next_state: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
@@ -236,10 +327,13 @@ fn click_play_button(
         ),
         (Changed<Interaction>, With<Button>),
     >,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     for (interaction, image_node, change_state, open_link, exit_app) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
+                audio.play(audio_assets.fx1.clone());
                 if let Some(state) = change_state {
                     next_state.set(state.0.clone());
                 } else if exit_app.is_some() {
@@ -260,6 +354,36 @@ fn click_play_button(
                     img.color = Color::WHITE;
                 }
             }
+        }
+    }
+}
+
+fn handle_volume_buttons(
+    mut vol: ResMut<GameVolume>,
+    up_q: Query<&Interaction, (Changed<Interaction>, With<VolumeUp>)>,
+    down_q: Query<&Interaction, (Changed<Interaction>, With<VolumeDown>)>,
+    mut display_q: Query<&mut Text, With<VolumeDisplay>>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
+) {
+    let mut changed = false;
+    for interaction in &up_q {
+        if *interaction == Interaction::Pressed {
+            vol.0 = (vol.0 + 0.1).min(1.0);
+            audio.play(audio_assets.fx1.clone());
+            changed = true;
+        }
+    }
+    for interaction in &down_q {
+        if *interaction == Interaction::Pressed {
+            vol.0 = (vol.0 - 0.1).max(0.0);
+            audio.play(audio_assets.fx1.clone());
+            changed = true;
+        }
+    }
+    if changed {
+        for mut text in &mut display_q {
+            **text = format!("{:.0}%", vol.0 * 100.0);
         }
     }
 }

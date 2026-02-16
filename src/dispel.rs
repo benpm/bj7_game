@@ -1,6 +1,6 @@
 use crate::GameState;
 use crate::aberration::Aberration;
-use crate::loading::TextureAssets;
+use crate::loading::{AudioAssets, TextureAssets};
 use crate::dialog::dialog_not_active;
 use crate::pause::game_not_paused;
 use crate::player::FpsCamera;
@@ -10,6 +10,7 @@ use bevy::window::{
     CursorGrabMode, CursorIcon, CursorOptions, CustomCursor, CustomCursorImage, PrimaryWindow,
     SystemCursorIcon,
 };
+use bevy_kira_audio::{Audio, AudioControl};
 
 pub struct DispelPlugin;
 
@@ -167,6 +168,8 @@ fn check_closure_and_dispel(
     aberration_q: Query<(Entity, &GlobalTransform), With<Aberration>>,
     camera_q: Query<(&Camera, &GlobalTransform), With<FpsCamera>>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
+    audio: Res<Audio>,
+    audio_assets: Res<AudioAssets>,
 ) {
     if !state.active || !state.drawing || state.points.len() < MIN_POINTS {
         return;
@@ -188,6 +191,7 @@ fn check_closure_and_dispel(
     state.points.push(cursor_pos);
 
     // Check each aberration against the polygon
+    let mut dispelled = false;
     if let Ok((camera, cam_transform)) = camera_q.single() {
         for (entity, ab_transform) in &aberration_q {
             if let Ok(viewport_pos) =
@@ -195,8 +199,13 @@ fn check_closure_and_dispel(
                 && point_in_polygon(viewport_pos * CANVAS_SCALE, &state.points)
             {
                 commands.entity(entity).despawn();
+                dispelled = true;
             }
         }
+    }
+
+    if dispelled {
+        audio.play(audio_assets.dispel.clone());
     }
 
     // Exit dispel mode

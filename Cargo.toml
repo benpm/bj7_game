@@ -50,7 +50,7 @@ bevy = { version = "0.18.0", default-features = false, features = [
     "wayland",
     "sysinfo_plugin",
 ] }
-bevy_kira_audio = { version = "0.25", features = ["android_shared_stdcxx"] }
+bevy_kira_audio = { version = "0.25", features = ["android_shared_stdcxx", "mp3", "ogg", "wav"] }
 bevy_asset_loader = { version = "0.25.0" }
 rand = { version = "0.9" }
 bevy_svg = { version = "0.18.0" }
