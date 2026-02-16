@@ -1,0 +1,10 @@
+(
+    types: [
+        (
+            layers: [
+                (texture: "textures/BaseAnimAberrationSheet.png", columns: 3),
+                (texture: "textures/GreenFace.png", columns: 4),
+            ],
+        ),
+    ]
+)
