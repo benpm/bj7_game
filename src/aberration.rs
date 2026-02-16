@@ -1,5 +1,6 @@
 use crate::GameState;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
+use crate::dialog::Npc;
 use crate::pause::game_not_paused;
 use crate::player::Player;
 use bevy::asset::RenderAssetUsages;
@@ -16,6 +17,9 @@ const SPAWN_MAX_DIST: f32 = 18.0;
 const SPAWN_HALF_ANGLE: f32 = std::f32::consts::FRAC_PI_4; // ±45° from look dir
 const SPAWN_ANIM_SECS: f32 = 0.5;
 const SENSITIVITY_DURING_SPAWN: f32 = 0.15; // multiplied onto normal sensitivity
+const KILL_COUNTDOWN_SECS: f32 = 5.0;
+const KILL_PROXIMITY: f32 = 3.0;
+const MAX_SHAKE_INTENSITY: f32 = 0.3;
 
 const ABERRATION_TYPES_RON: &str = include_str!("../assets/defs/types.ron");
 
@@ -30,6 +34,8 @@ impl Plugin for AberrationPlugin {
                     spawn_aberration_periodic,
                     aberration_face_player,
                     animate_spawn,
+                    kill_countdown_proximity,
+                    kill_countdown_tick,
                 )
                     .run_if(in_state(GameState::Playing).and(game_not_paused)),
             )
@@ -49,6 +55,8 @@ struct AberrationTypeRon {
     layers: Vec<LayerRon>,
     #[serde(default = "default_size")]
     size: f32,
+    #[serde(default)]
+    npc: bool,
 }
 
 fn default_size() -> f32 {
@@ -69,6 +77,7 @@ struct AberrationTypes(Vec<AberrationTypeDef>);
 struct AberrationTypeDef {
     layers: Vec<LayerDef>,
     size: f32,
+    npc: bool,
 }
 
 struct LayerDef {
@@ -84,6 +93,13 @@ pub struct Aberration;
 #[derive(Component)]
 pub struct SpawnAnimation {
     timer: Timer,
+}
+
+/// Kill countdown: when a non-NPC aberration is approached, counts down to game over.
+#[derive(Component)]
+struct KillCountdown {
+    timer: Timer,
+    base_pos: Vec3,
 }
 
 /// Returns a sensitivity multiplier (< 1.0 during spawn animations, 1.0 otherwise).
@@ -142,6 +158,7 @@ fn init_aberrations(mut commands: Commands, asset_server: Res<AssetServer>) {
         .into_iter()
         .map(|t| AberrationTypeDef {
             size: t.size,
+            npc: t.npc,
             layers: t
                 .layers
                 .into_iter()
@@ -201,24 +218,28 @@ fn spawn_aberration_periodic(
 
     let type_def = &types.0[rng.random_range(0..types.0.len())];
 
-    commands
-        .spawn((
-            Transform::from_translation(spawn_pos).with_scale(Vec3::new(0.0, 1.0, 1.0)),
-            Visibility::default(),
-            Aberration,
-            SpawnAnimation {
-                timer: Timer::from_seconds(SPAWN_ANIM_SECS, TimerMode::Once),
-            },
-            Actor {
-                speed: 0.0,
-                height: 1.0,
-                yaw: 0.0,
-                vertical_velocity: 0.0,
-                grounded: true,
-            },
-            ActorIntent::default(),
-        ))
-        .with_children(|parent| {
+    let mut entity_cmd = commands.spawn((
+        Transform::from_translation(spawn_pos).with_scale(Vec3::new(0.0, 1.0, 1.0)),
+        Visibility::default(),
+        Aberration,
+        SpawnAnimation {
+            timer: Timer::from_seconds(SPAWN_ANIM_SECS, TimerMode::Once),
+        },
+        Actor {
+            speed: 0.0,
+            height: 1.0,
+            yaw: 0.0,
+            vertical_velocity: 0.0,
+            grounded: true,
+        },
+        ActorIntent::default(),
+    ));
+
+    if type_def.npc {
+        entity_cmd.insert(Npc { range: KILL_PROXIMITY });
+    }
+
+    entity_cmd.with_children(|parent| {
             for (i, layer) in type_def.layers.iter().enumerate() {
                 let frame = rng.random_range(0..layer.columns);
                 let quad = meshes.add(sprite_frame_quad(type_def.size, type_def.size, layer.columns, frame));
@@ -237,6 +258,71 @@ fn spawn_aberration_periodic(
         });
 
     spawn_timer.timer = Timer::from_seconds(random_spawn_delay(), TimerMode::Once);
+}
+
+fn kill_countdown_proximity(
+    mut commands: Commands,
+    player_q: Query<&GlobalTransform, With<Player>>,
+    aberration_q: Query<
+        (Entity, &GlobalTransform),
+        (With<Aberration>, Without<Npc>, Without<KillCountdown>),
+    >,
+) {
+    let Ok(player_tf) = player_q.single() else {
+        return;
+    };
+    let player_pos = player_tf.translation();
+
+    for (entity, ab_tf) in &aberration_q {
+        let dist = player_pos.distance(ab_tf.translation());
+        if dist <= KILL_PROXIMITY {
+            commands.entity(entity).insert(KillCountdown {
+                timer: Timer::from_seconds(KILL_COUNTDOWN_SECS, TimerMode::Once),
+                base_pos: ab_tf.translation(),
+            });
+        }
+    }
+}
+
+fn kill_countdown_tick(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut next_state: ResMut<NextState<GameState>>,
+    player_q: Query<&GlobalTransform, With<Player>>,
+    mut query: Query<(Entity, &GlobalTransform, &mut Transform, &mut KillCountdown), With<Aberration>>,
+) {
+    let Ok(player_tf) = player_q.single() else {
+        return;
+    };
+    let player_pos = player_tf.translation();
+
+    for (entity, global_tf, mut transform, mut countdown) in &mut query {
+        let dist = player_pos.distance(global_tf.translation());
+
+        // Cancel countdown if player moves away
+        if dist > KILL_PROXIMITY * 2.0 {
+            transform.translation = countdown.base_pos;
+            commands.entity(entity).remove::<KillCountdown>();
+            continue;
+        }
+
+        countdown.timer.tick(time.delta());
+        let progress = countdown.timer.fraction(); // 0.0 → 1.0
+
+        // Shake intensity increases as countdown progresses
+        let intensity = progress * progress * MAX_SHAKE_INTENSITY;
+        let mut rng = rand::rng();
+        let shake_x = rng.random_range(-intensity..intensity);
+        let shake_z = rng.random_range(-intensity..intensity);
+        transform.translation.x = countdown.base_pos.x + shake_x;
+        transform.translation.z = countdown.base_pos.z + shake_z;
+
+        if progress >= 1.0 {
+            // Game over — return to menu
+            next_state.set(GameState::Menu);
+            return;
+        }
+    }
 }
 
 fn aberration_face_player(

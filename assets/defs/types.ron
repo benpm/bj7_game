@@ -6,6 +6,7 @@
                 (texture: "textures/GreenFace.png", columns: 4),
             ],
             size: 2.0,
+            npc: true,
         ),
         (
             layers: [
@@ -27,6 +28,7 @@
                 (texture: "textures/YellowFace.png", columns: 4),
             ],
             size: 2.0,
+            npc: true,
         ),
     ]
 )
