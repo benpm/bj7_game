@@ -62,6 +62,15 @@ fn spawn_player(mut commands: Commands, canvas: Res<CanvasImage>) {
                 FpsCamera,
                 PaletteSqueeze::default(),
             ));
+            parent.spawn((
+                PointLight {
+                    intensity: 50_000.0,
+                    range: 30.0,
+                    shadows_enabled: true,
+                    ..default()
+                },
+                Transform::from_xyz(0.0, 0.3, 0.0),
+            ));
         });
 }
 

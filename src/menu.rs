@@ -4,7 +4,6 @@ use crate::palette::PaletteSqueeze;
 use crate::scaling::CanvasImage;
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
-use bevy_svg::prelude::*;
 
 pub struct MenuPlugin;
 
@@ -40,7 +39,6 @@ fn setup_menu(
     mut commands: Commands,
     textures: Res<TextureAssets>,
     fonts: Res<FontAssets>,
-    asset_server: Res<AssetServer>,
     canvas: Res<CanvasImage>,
 ) {
     let font = fonts.main.clone();

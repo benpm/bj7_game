@@ -11,6 +11,7 @@
 - [ ] Create a simple RPG-style dialog system. 
   - Use `bevy_text_animation` to animate the text displayed on screen
   - Embed the dialogs/dialog_tree.ron file using bevy asset embedding crate
+  - Create an NPC trait that allows pressing E when player near, opening dialog UI
 - [ ] `assets\textures\BaseAnimAberrationSheet.png` is a sprite sheet containing 3 cells, in a row. Instead of drawing the aberration as a single billboard
 
 
@@ -19,13 +20,7 @@
 
 > These are WIP and should not be worked on until moved to [done](#done)
 
-- [ ] Add Puppeteer plugin that can automate basic gameplay, and take screenshots, to test gameplay functionality. Make a test and run it.
-  - **Prerequisites**: `cargo install --locked trunk` (trunk not currently installed; wasm target + Node.js v25 + npm 11 already present)
-  - **Files to create**: `tests/puppeteer/package.json` (puppeteer dep), `tests/puppeteer/gameplay.test.mjs` (test script)
-  - **Gitignore**: Add `tests/puppeteer/node_modules/` and `tests/puppeteer/screenshots/`
-  - **Test flow**: `trunk build` → serve `dist/` via Node http → headless Chrome with WebGL → navigate menu → click Play (canvas center ~640,360) → take screenshots at each stage (menu, gameplay, pause) → verify non-trivial file sizes (>10KB)
-  - **Puppeteer config**: `headless: 'shell'`, `args: ['--enable-webgl', '--no-sandbox', '--use-gl=angle']`, viewport 1280x720
-  - **Run**: `cd tests/puppeteer && npm install && npm test`
+
 
 ## Questions
 <!-- questions for USER go here: -->
