@@ -1,6 +1,7 @@
 use crate::GameState;
 use crate::aberration::Aberration;
 use crate::loading::TextureAssets;
+use crate::dialog::dialog_not_active;
 use crate::pause::game_not_paused;
 use crate::player::FpsCamera;
 use crate::scaling::CANVAS_SCALE;
@@ -25,7 +26,7 @@ impl Plugin for DispelPlugin {
                     draw_dispel_gizmos,
                 )
                     .chain()
-                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
+                    .run_if(in_state(GameState::Playing).and(game_not_paused).and(dialog_not_active)),
             )
             .add_systems(OnExit(GameState::Playing), cleanup_dispel);
     }
