@@ -1,0 +1,74 @@
+name: release-web
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-web
+  cancel-in-progress: true
+
+env:
+  GAME_EXECUTABLE_NAME: bevy_game
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: wasm-release-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Install build dependencies
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+
+      - name: Install Bevy CLI and tools
+        run: |
+          cargo binstall --version 0.1.0-alpha.2 --locked --no-confirm --force --git='https://github.com/TheBevyFlock/bevy_cli' bevy_cli
+          cargo binstall --locked --no-confirm --force wasm-bindgen-cli
+          cargo binstall --locked --no-confirm --force wasm-opt
+
+      - name: Build web bundle
+        run: bevy build --release --yes web --bundle
+
+      - name: Optimize wasm
+        uses: NiklasEi/wasm-opt-action@v2
+        with:
+          file: target/bevy_web/web-release/${{ env.GAME_EXECUTABLE_NAME }}/*.wasm
+
+      - name: Zip web bundle
+        working-directory: target/bevy_web/web-release
+        run: zip -r ${{ env.GAME_EXECUTABLE_NAME }}_web.zip ${{ env.GAME_EXECUTABLE_NAME }}
+
+      - name: Upload to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/bevy_web/web-release/${{ env.GAME_EXECUTABLE_NAME }}_web.zip
+          asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_latest_web.zip
+          release_name: latest
+          tag: latest
+          overwrite: true
+          prerelease: true
+          body: "Latest web build from main branch"
