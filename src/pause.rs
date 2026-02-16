@@ -1,4 +1,6 @@
 use crate::GameState;
+use crate::dialog::DialogState;
+use crate::dispel::DispelState;
 use crate::environment::{Environment, RunTimer};
 use crate::health::Health;
 use crate::loading::{AudioAssets, FontAssets, TextureAssets};
@@ -14,7 +16,7 @@ impl Plugin for PausePlugin {
         app.add_systems(OnEnter(GameState::Playing), init_paused)
             .add_systems(
                 Update,
-                (toggle_pause, manage_pause_menu, handle_pause_buttons)
+                (pause_on_cursor_unlock, toggle_pause, manage_pause_menu, handle_pause_buttons)
                     .chain()
                     .run_if(in_state(GameState::Playing)),
             )
@@ -52,6 +54,30 @@ fn textbox_slicer() -> TextureSlicer {
 
 fn init_paused(mut commands: Commands) {
     commands.insert_resource(Paused(false));
+}
+
+/// If the cursor becomes unlocked during gameplay (e.g. Chrome releases pointer lock on Escape),
+/// auto-pause so the player sees the pause menu immediately.
+fn pause_on_cursor_unlock(
+    mut paused: ResMut<Paused>,
+    cursor_q: Query<&CursorOptions, (Changed<CursorOptions>, With<PrimaryWindow>)>,
+    dispel: Option<Res<DispelState>>,
+    dialog: Option<Res<DialogState>>,
+) {
+    if paused.0 {
+        return;
+    }
+    if dispel.is_some_and(|d| d.active) {
+        return;
+    }
+    if dialog.is_some_and(|d| d.active) {
+        return;
+    }
+    if let Ok(cursor) = cursor_q.single() {
+        if cursor.grab_mode != CursorGrabMode::Locked {
+            paused.0 = true;
+        }
+    }
 }
 
 fn toggle_pause(
