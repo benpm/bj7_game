@@ -18,13 +18,11 @@ impl Plugin for PlayerPlugin {
         app.add_systems(OnEnter(GameState::Playing), (spawn_player, grab_cursor))
             .add_systems(
                 Update,
-                (player_mouse_look, player_movement_input)
-                    .chain()
-                    .run_if(
-                        in_state(GameState::Playing)
-                            .and(game_not_paused)
-                            .and(dialog_not_active),
-                    ),
+                (player_mouse_look, player_movement_input).chain().run_if(
+                    in_state(GameState::Playing)
+                        .and(game_not_paused)
+                        .and(dialog_not_active),
+                ),
             )
             .add_systems(OnExit(GameState::Playing), (cleanup_player, release_cursor));
     }
@@ -70,8 +68,8 @@ fn spawn_player(mut commands: Commands, canvas: Res<CanvasImage>) {
             parent.spawn((
                 PointLight {
                     intensity: 50_000.0,
-                    range: 30.0,
-                    shadows_enabled: true,
+                    range: 100.0,
+                    shadows_enabled: false,
                     ..default()
                 },
                 Transform::from_xyz(0.0, 0.3, 0.0),
@@ -86,9 +84,18 @@ fn player_mouse_look(
     mut camera_query: Query<&mut Transform, (With<FpsCamera>, Without<Player>)>,
     spawn_anim_query: Query<(), With<SpawnAnimation>>,
     dispel: Option<Res<DispelState>>,
+    mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     if dispel.is_some_and(|d| d.active) {
         return;
+    }
+
+    // Ensure cursor is locked whenever player has control
+    if let Ok(mut cursor) = cursor_q.single_mut() {
+        if cursor.grab_mode != CursorGrabMode::Locked {
+            cursor.grab_mode = CursorGrabMode::Locked;
+            cursor.visible = false;
+        }
     }
 
     let Ok(mut actor) = player_query.single_mut() else {

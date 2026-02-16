@@ -6,7 +6,6 @@
 
 > These are ready for work, probably.
 
-- [ ] The camera remains locked after dialog is complete, fix this
 - [ ] Use `FeatherCursor.png` as the mouse cursor image when in dispel mode.
 - [ ] In the main menu, show the `splash.png` texture, tiled, in the background. 
 
@@ -23,6 +22,7 @@
 
 ## Done
 
+- [x] Fix camera remaining locked after dialog completes
 - [x] Indent response buttons, NPC portrait next to text box, animated button height grow-in
 - [x] Configure and test the CI pipeline for web deployment. It should run on every commit.
 - [x] NPC billboard sprites from .ron config, aberration size property configurable in types.ron
