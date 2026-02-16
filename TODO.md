@@ -6,7 +6,7 @@
 
 > These are ready for work, probably.
 
-- [ ] NPCs should have a billboard sprite appear above their head using the `unknown.png` texture. Allow this to be configured in the .ron file, along with other properties of aberrations.
+- [ ] Configure and test the CI pipeline for web deployment. It should run on every commit.
 
 
 
@@ -16,12 +16,14 @@
 
 
 
+
 ## Questions
 <!-- questions for USER go here: -->
 
 
 ## Done
 
+- [x] NPC billboard sprites from .ron config, aberration size property configurable in types.ron
 - [x] Recursive dialog tree from `assets/defs/dialog.ron` with Player response buttons, cursor management, hover effects
 - [x] Set the bevy `UiScale` to 2
 - [x] Layered sprite sheet aberrations defined by .ron files (BaseAnimAberrationSheet + GreenFace overlay)

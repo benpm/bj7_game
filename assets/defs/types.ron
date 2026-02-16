@@ -1,0 +1,32 @@
+(
+    types: [
+        (
+            layers: [
+                (texture: "textures/BaseAnimAberrationSheet.png", columns: 3),
+                (texture: "textures/GreenFace.png", columns: 4),
+            ],
+            size: 2.0,
+        ),
+        (
+            layers: [
+                (texture: "textures/BaseAnimAberrationSheet.png", columns: 3),
+                (texture: "textures/BlueFace.png", columns: 4),
+            ],
+            size: 2.0,
+        ),
+        (
+            layers: [
+                (texture: "textures/BaseAnimAberrationSheet.png", columns: 3),
+                (texture: "textures/PinkFace.png", columns: 4),
+            ],
+            size: 2.0,
+        ),
+        (
+            layers: [
+                (texture: "textures/BaseAnimAberrationSheet.png", columns: 3),
+                (texture: "textures/YellowFace.png", columns: 4),
+            ],
+            size: 2.0,
+        ),
+    ]
+)

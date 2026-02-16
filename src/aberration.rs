@@ -17,7 +17,7 @@ const SPAWN_HALF_ANGLE: f32 = std::f32::consts::FRAC_PI_4; // ±45° from look d
 const SPAWN_ANIM_SECS: f32 = 0.5;
 const SENSITIVITY_DURING_SPAWN: f32 = 0.15; // multiplied onto normal sensitivity
 
-const ABERRATION_TYPES_RON: &str = include_str!("../assets/aberrations/types.ron");
+const ABERRATION_TYPES_RON: &str = include_str!("../assets/defs/types.ron");
 
 pub struct AberrationPlugin;
 
@@ -47,6 +47,12 @@ struct AberrationTypesRon {
 #[derive(Deserialize)]
 struct AberrationTypeRon {
     layers: Vec<LayerRon>,
+    #[serde(default = "default_size")]
+    size: f32,
+}
+
+fn default_size() -> f32 {
+    2.0
 }
 
 #[derive(Deserialize)]
@@ -62,6 +68,7 @@ struct AberrationTypes(Vec<AberrationTypeDef>);
 
 struct AberrationTypeDef {
     layers: Vec<LayerDef>,
+    size: f32,
 }
 
 struct LayerDef {
@@ -121,12 +128,7 @@ fn sprite_frame_quad(width: f32, height: f32, columns: u32, frame: u32) -> Mesh 
     .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, vec![[0.0, 0.0, 1.0]; 4])
     .with_inserted_attribute(
         Mesh::ATTRIBUTE_UV_0,
-        vec![
-            [u_min, 1.0],
-            [u_max, 1.0],
-            [u_max, 0.0],
-            [u_min, 0.0],
-        ],
+        vec![[u_min, 1.0], [u_max, 1.0], [u_max, 0.0], [u_min, 0.0]],
     )
     .with_inserted_indices(Indices::U32(vec![0, 1, 2, 0, 2, 3]))
 }
@@ -139,6 +141,7 @@ fn init_aberrations(mut commands: Commands, asset_server: Res<AssetServer>) {
         .types
         .into_iter()
         .map(|t| AberrationTypeDef {
+            size: t.size,
             layers: t
                 .layers
                 .into_iter()
@@ -218,7 +221,7 @@ fn spawn_aberration_periodic(
         .with_children(|parent| {
             for (i, layer) in type_def.layers.iter().enumerate() {
                 let frame = rng.random_range(0..layer.columns);
-                let quad = meshes.add(sprite_frame_quad(2.0, 2.0, layer.columns, frame));
+                let quad = meshes.add(sprite_frame_quad(type_def.size, type_def.size, layer.columns, frame));
                 parent.spawn((
                     Mesh3d(quad),
                     MeshMaterial3d(materials.add(StandardMaterial {
