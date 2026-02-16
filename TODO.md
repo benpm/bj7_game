@@ -6,7 +6,6 @@
 
 > These are ready for work, probably.
 
-- [ ] In the main menu, show the `splash.png` texture, tiled, in the background. 
 
 
 ## WIP
@@ -21,6 +20,7 @@
 
 ## Done
 
+- [x] Tiled splash.png background in main menu
 - [x] Use FeatherCursor.png as custom cursor in dispel mode
 - [x] Fix camera remaining locked after dialog completes
 - [x] Indent response buttons, NPC portrait next to text box, animated button height grow-in

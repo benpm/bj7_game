@@ -23,7 +23,7 @@ fn textbox_slicer() -> TextureSlicer {
     TextureSlicer {
         border: BorderRect::all(16.0),
         center_scale_mode: SliceScaleMode::Stretch,
-        sides_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 },
         max_corner_scale: 1.0,
     }
 }
@@ -40,11 +40,33 @@ fn setup_menu(
         Camera2d,
         Camera {
             order: -1,
+            clear_color: ClearColorConfig::Custom(Color::linear_rgba(0.1, 0.1, 0.1, 1.0)),
             ..default()
         },
         bevy::camera::RenderTarget::from(canvas.0.clone()),
         Msaa::Off,
+        Menu,
         PaletteSqueeze::default(),
+    ));
+
+    // Tiled splash background
+    commands.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            position_type: PositionType::Absolute,
+            ..default()
+        },
+        ImageNode {
+            image: textures.splash.clone(),
+            image_mode: NodeImageMode::Tiled {
+                tile_x: true,
+                tile_y: true,
+                stretch_value: 1.0,
+            },
+            ..default()
+        },
+        GlobalZIndex(-1),
         Menu,
     ));
 
