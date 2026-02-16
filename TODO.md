@@ -6,13 +6,12 @@
 
 > These are ready for work, probably.
 
-- [ ] Add a point light source to the player
-- [ ] Use the 9-slice texture `textures/textbox9x9.png` for buttons. Also, create a modal / box for the UI elements in the pause menu.
 - [ ] Create a simple RPG-style dialog system. 
   - Use `bevy_text_animation` to animate the text displayed on screen
   - Embed the dialogs/dialog_tree.ron file using bevy asset embedding crate
   - Create an NPC trait that allows pressing E when player near, opening dialog UI
-- [ ] `assets\textures\BaseAnimAberrationSheet.png` is a sprite sheet containing 3 cells, in a row. Instead of drawing the aberration as a single billboard
+- [ ] `assets\textures\BaseAnimAberrationSheet.png` is a sprite sheet containing 3 cells, in a row. Instead of drawing the aberration as a single billboard, draw  `GreenFace.png` (4 cell sheet) as a layer on top of that base layer. Allow aberrations to be any number of layers. Allow aberrations to be defined by .ron files that should also be embedded.
+- [ ] Set the bevy `UiScale` to 2
 
 
 
@@ -28,6 +27,8 @@
 
 ## Done
 
+- [x] Use 9-slice textbox texture for buttons and pause menu modal
+- [x] Add a point light source to the player
 - [x] Separate out the transition logic from environment.rs into a new struct, allowing scene transitions to be triggered independently
 - [x] Use font assets/fonts/sd-auto-pilot.ttf for the font for all UI
 - [x] Update palette.rs to work on the entire game's full color output, including UI

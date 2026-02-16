@@ -1,6 +1,7 @@
 ![](assets\vector_sprites\creeper_A.svg)
 
-# Bevy Jam 7
+# Hypnoscape Express
+Bevy Jam 7 submission
 
 Theme: ***"Extremely Incohesive Fever Dream"***
 

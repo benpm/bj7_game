@@ -3,6 +3,7 @@
 mod aberration;
 mod actions;
 pub mod actor;
+mod dialog;
 mod dispel;
 mod environment;
 mod health;
@@ -18,6 +19,7 @@ mod world;
 use crate::aberration::AberrationPlugin;
 use crate::actions::ActionsPlugin;
 use crate::actor::ActorPlugin;
+use crate::dialog::DialogPlugin;
 use crate::dispel::DispelPlugin;
 use crate::environment::EnvironmentPlugin;
 use crate::health::HealthPlugin;
@@ -52,6 +54,7 @@ impl Plugin for GamePlugin {
             ActionsPlugin,
             ActorPlugin,
             AberrationPlugin,
+            DialogPlugin,
             DispelPlugin,
             HealthPlugin,
             EnvironmentPlugin,

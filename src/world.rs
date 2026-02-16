@@ -1,4 +1,5 @@
 use crate::GameState;
+use crate::dialog::Npc;
 use bevy::prelude::*;
 
 pub struct WorldPlugin;
@@ -26,6 +27,22 @@ fn setup_world(
             perceptual_roughness: 0.9,
             ..default()
         })),
+        WorldEntity,
+    ));
+
+    // NPC guide
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(0.6, 1.8, 0.6))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.8, 0.8, 0.8),
+            emissive: bevy::color::LinearRgba::new(0.3, 0.3, 0.3, 1.0),
+            ..default()
+        })),
+        Transform::from_xyz(3.0, 0.9, -3.0),
+        Npc {
+            dialog_id: "guide".to_string(),
+            range: 3.0,
+        },
         WorldEntity,
     ));
 

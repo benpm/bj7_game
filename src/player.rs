@@ -2,6 +2,7 @@ use crate::GameState;
 use crate::aberration::{SpawnAnimation, spawn_sensitivity_factor};
 use crate::actions::Actions;
 use crate::actor::{Actor, ActorIntent, GROUND_Y};
+use crate::dialog::dialog_not_active;
 use crate::dispel::DispelState;
 use crate::palette::PaletteSqueeze;
 use crate::pause::game_not_paused;
@@ -19,7 +20,11 @@ impl Plugin for PlayerPlugin {
                 Update,
                 (player_mouse_look, player_movement_input)
                     .chain()
-                    .run_if(in_state(GameState::Playing).and(game_not_paused)),
+                    .run_if(
+                        in_state(GameState::Playing)
+                            .and(game_not_paused)
+                            .and(dialog_not_active),
+                    ),
             )
             .add_systems(OnExit(GameState::Playing), (cleanup_player, release_cursor));
     }

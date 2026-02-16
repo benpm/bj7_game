@@ -1,0 +1,11 @@
+(
+    dialogs: {
+        "guide": [
+            "Hello, wanderer. These lands are not safe...",
+            "The aberrations feed on your sanity. You must dispel them before it is too late.",
+            "Left click to enter dispel mode. Then click and hold to draw a loop around them.",
+            "Close the loop and any aberrations caught inside will be banished.",
+            "Good luck. You will need it.",
+        ],
+    }
+)

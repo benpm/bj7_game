@@ -4,11 +4,13 @@
 use bevy::DefaultPlugins;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_game::GamePlugin; // ToDo: Replace bevy_game with your new crate name.
 
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
+        .add_plugins(EmbeddedAssetPlugin::default())
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
