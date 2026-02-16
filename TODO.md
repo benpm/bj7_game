@@ -6,7 +6,6 @@
 
 > These are ready for work, probably.
 
-- [ ] Use `FeatherCursor.png` as the mouse cursor image when in dispel mode.
 - [ ] In the main menu, show the `splash.png` texture, tiled, in the background. 
 
 
@@ -22,6 +21,7 @@
 
 ## Done
 
+- [x] Use FeatherCursor.png as custom cursor in dispel mode
 - [x] Fix camera remaining locked after dialog completes
 - [x] Indent response buttons, NPC portrait next to text box, animated button height grow-in
 - [x] Configure and test the CI pipeline for web deployment. It should run on every commit.

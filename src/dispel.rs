@@ -1,10 +1,14 @@
 use crate::GameState;
 use crate::aberration::Aberration;
+use crate::loading::TextureAssets;
 use crate::pause::game_not_paused;
 use crate::player::FpsCamera;
 use crate::scaling::CANVAS_SCALE;
 use bevy::prelude::*;
-use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
+use bevy::window::{
+    CursorGrabMode, CursorIcon, CursorOptions, CustomCursor, CustomCursorImage, PrimaryWindow,
+    SystemCursorIcon,
+};
 
 pub struct DispelPlugin;
 
@@ -62,10 +66,12 @@ fn init_dispel(mut commands: Commands) {
 }
 
 fn toggle_dispel(
+    mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<DispelState>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
-    window_q: Query<&Window, With<PrimaryWindow>>,
+    window_q: Query<(Entity, &Window), With<PrimaryWindow>>,
+    textures: Res<TextureAssets>,
 ) {
     if !mouse.just_pressed(MouseButton::Left) {
         return;
@@ -80,12 +86,25 @@ fn toggle_dispel(
             cursor.grab_mode = CursorGrabMode::None;
             cursor.visible = true;
         }
+        // Set custom cursor
+        if let Ok((window_entity, _)) = window_q.single() {
+            commands.entity(window_entity).insert(CursorIcon::Custom(
+                CustomCursor::Image(CustomCursorImage {
+                    handle: textures.feather_cursor.clone(),
+                    texture_atlas: None,
+                    flip_x: false,
+                    flip_y: false,
+                    rect: None,
+                    hotspot: (0, 0),
+                }),
+            ));
+        }
     } else if !state.drawing {
         // Start drawing
         state.drawing = true;
         state.points.clear();
         state.segment_timer.reset();
-        if let Ok(window) = window_q.single()
+        if let Ok((_, window)) = window_q.single()
             && let Some(pos) = window.cursor_position()
         {
             state.points.push(pos);
@@ -127,6 +146,7 @@ fn check_closure_and_dispel(
     mut commands: Commands,
     mut state: ResMut<DispelState>,
     window_q: Query<&Window, With<PrimaryWindow>>,
+    window_entity_q: Query<Entity, With<PrimaryWindow>>,
     aberration_q: Query<(Entity, &GlobalTransform), With<Aberration>>,
     camera_q: Query<(&Camera, &GlobalTransform), With<FpsCamera>>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
@@ -163,22 +183,26 @@ fn check_closure_and_dispel(
     }
 
     // Exit dispel mode
-    deactivate_dispel(&mut state, &mut cursor_q);
+    deactivate_dispel(&mut commands, &mut state, &mut cursor_q, &window_entity_q);
 }
 
 fn exit_dispel_on_right_click(
+    mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<DispelState>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
+    window_entity_q: Query<Entity, With<PrimaryWindow>>,
 ) {
     if state.active && mouse.just_pressed(MouseButton::Right) {
-        deactivate_dispel(&mut state, &mut cursor_q);
+        deactivate_dispel(&mut commands, &mut state, &mut cursor_q, &window_entity_q);
     }
 }
 
 fn deactivate_dispel(
+    commands: &mut Commands,
     state: &mut DispelState,
     cursor_q: &mut Query<&mut CursorOptions, With<PrimaryWindow>>,
+    window_q: &Query<Entity, With<PrimaryWindow>>,
 ) {
     state.active = false;
     state.drawing = false;
@@ -186,6 +210,12 @@ fn deactivate_dispel(
     if let Ok(mut cursor) = cursor_q.single_mut() {
         cursor.grab_mode = CursorGrabMode::Locked;
         cursor.visible = false;
+    }
+    // Restore default cursor
+    if let Ok(window_entity) = window_q.single() {
+        commands
+            .entity(window_entity)
+            .insert(CursorIcon::System(SystemCursorIcon::Default));
     }
 }
 
