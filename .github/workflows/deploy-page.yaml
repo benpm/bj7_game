@@ -49,6 +49,9 @@ jobs:
       - name: Generate wasm bindings
         run: wasm-bindgen --out-dir dist --target web target/wasm32-unknown-unknown/web-release/${{ env.GAME_EXECUTABLE_NAME }}.wasm
 
+      - name: Copy assets
+        run: cp -r assets dist/assets
+
       - name: Optimize wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:

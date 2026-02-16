@@ -319,7 +319,6 @@ fn kill_countdown_proximity(
 fn kill_countdown_tick(
     mut commands: Commands,
     time: Res<Time>,
-    mut next_state: ResMut<NextState<GameState>>,
     player_q: Query<&GlobalTransform, With<Player>>,
     mut query: Query<(Entity, &GlobalTransform, &mut Transform, &mut KillCountdown), With<Aberration>>,
 ) {
@@ -350,8 +349,7 @@ fn kill_countdown_tick(
         transform.translation.z = countdown.base_pos.z + shake_z;
 
         if progress >= 1.0 {
-            // Game over — return to menu
-            next_state.set(GameState::Menu);
+            commands.insert_resource(crate::death::Dead);
             return;
         }
     }

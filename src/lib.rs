@@ -3,6 +3,7 @@
 mod aberration;
 mod actions;
 pub mod actor;
+mod death;
 mod dialog;
 mod dispel;
 mod environment;
@@ -19,6 +20,7 @@ mod world;
 use crate::aberration::AberrationPlugin;
 use crate::actions::ActionsPlugin;
 use crate::actor::ActorPlugin;
+use crate::death::DeathPlugin;
 use crate::dialog::DialogPlugin;
 use crate::dispel::DispelPlugin;
 use crate::environment::EnvironmentPlugin;
@@ -50,21 +52,24 @@ impl Plugin for GamePlugin {
         app.insert_resource(UiScale(2.0))
             .init_state::<GameState>()
             .add_plugins((
-            ScalingPlugin,
-            LoadingPlugin,
-            MenuPlugin,
-            ActionsPlugin,
-            ActorPlugin,
-            AberrationPlugin,
-            DialogPlugin,
-            DispelPlugin,
-            HealthPlugin,
-            EnvironmentPlugin,
-            PalettePlugin,
-            PausePlugin,
-            PlayerPlugin,
-            TransitionPlugin,
-            WorldPlugin,
-        ));
+                ScalingPlugin,
+                LoadingPlugin,
+                MenuPlugin,
+                ActionsPlugin,
+                ActorPlugin,
+                AberrationPlugin,
+                DeathPlugin,
+                DialogPlugin,
+            ))
+            .add_plugins((
+                DispelPlugin,
+                HealthPlugin,
+                EnvironmentPlugin,
+                PalettePlugin,
+                PausePlugin,
+                PlayerPlugin,
+                TransitionPlugin,
+                WorldPlugin,
+            ));
     }
 }

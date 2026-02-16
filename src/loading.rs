@@ -34,4 +34,6 @@ pub struct TextureAssets {
     pub feather_cursor: Handle<Image>,
     #[asset(path = "textures/splash.png")]
     pub splash: Handle<Image>,
+    #[asset(path = "textures/death.png")]
+    pub death: Handle<Image>,
 }
