@@ -1,0 +1,166 @@
+DialogueTrees([
+    // Tree 1
+    DialogueNode(
+        role: Npc,
+        text: "H-- l*** **ve yOu be#n h##*? (flickering?)\n\nHow long have you been here?",
+        responses: [
+            DialogueNode(
+                role: Player,
+                text: "I think I never left.",
+                responses: [
+                    DialogueNode(
+                        role: Npc,
+                        text: "Why did you stay?",
+                        responses: [
+                            DialogueNode(
+                                role: Player,
+                                text: "Why did you?",
+                                responses: [],
+                            ),
+                            DialogueNode(
+                                role: Player,
+                                text: "...",
+                                responses: [],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            DialogueNode(
+                role: Player,
+                text: "Where is here?",
+                responses: [],
+            ),
+        ],
+    ),
+
+    // Tree 2
+    DialogueNode(
+        role: Npc,
+        text: "I think I understand.",
+        responses: [
+            DialogueNode(
+                role: Player,
+                text: "What do you understand?",
+                responses: [
+                    DialogueNode(
+                        role: Npc,
+                        text: "That there's nothing to understand. Do you understand?",
+                        responses: [
+                            DialogueNode(
+                                role: Player,
+                                text: "Of course not.",
+                                responses: [
+                                    DialogueNode(
+                                        role: Npc,
+                                        text: "Of course not.",
+                                        responses: [],
+                                    ),
+                                ],
+                            ),
+                            DialogueNode(
+                                role: Player,
+                                text: "Of course.",
+                                responses: [
+                                    DialogueNode(
+                                        role: Npc,
+                                        text: "No. You could not.",
+                                        responses: [],
+                                    ),
+                                ],
+                            ),
+                            DialogueNode(
+                                role: Player,
+                                text: "...",
+                                responses: [],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            DialogueNode(
+                role: Player,
+                text: "Are you sure?",
+                responses: [
+                    DialogueNode(
+                        role: Npc,
+                        text: "Yes.",
+                        responses: [],
+                    ),
+                ],
+            ),
+        ],
+    ),
+
+    // Tree 3
+    DialogueNode(
+        role: Npc,
+        text: "Do we know each other?",
+        responses: [
+            DialogueNode(
+                role: Player,
+                text: "Not like we know ourselves.",
+                responses: [
+                    DialogueNode(
+                        role: Npc,
+                        text: "Do you see me?",
+                        responses: [
+                            DialogueNode(
+                                role: Player,
+                                text: "Yes.",
+                                responses: [
+                                    DialogueNode(
+                                        role: Npc,
+                                        text: "Do you really? Do you really see me? Do you see me? Do you really see me?",
+                                        responses: [],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            DialogueNode(
+                role: Player,
+                text: "I don't know you. You might know me.",
+                responses: [
+                    DialogueNode(
+                        role: Npc,
+                        text: "Do you see me?",
+                        responses: [
+                            DialogueNode(
+                                role: Player,
+                                text: "Yes.",
+                                responses: [
+                                    DialogueNode(
+                                        role: Npc,
+                                        text: "Do you really? Do you really see me? Do you see me? Do you really see me?",
+                                        responses: [],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            DialogueNode(
+                role: Player,
+                text: "Maybe we all can get to know each other.",
+                responses: [],
+            ),
+        ],
+    ),
+
+    // Tree 4
+    DialogueNode(
+        role: Npc,
+        text: "There is no \"you\".",
+        responses: [
+            DialogueNode(
+                role: Player,
+                text: "No \"you\". But there is \"me\".",
+                responses: [],
+            ),
+        ],
+    ),
+])

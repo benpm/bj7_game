@@ -39,10 +39,7 @@ fn setup_world(
             ..default()
         })),
         Transform::from_xyz(3.0, 0.9, -3.0),
-        Npc {
-            dialog_id: "guide".to_string(),
-            range: 3.0,
-        },
+        Npc { range: 3.0 },
         WorldEntity,
     ));
 

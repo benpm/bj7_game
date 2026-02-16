@@ -1,11 +1,12 @@
 # TODO
 
-> Do these in written order. Make commit before moving on to next task. Iterate until there are no tasks left. Check them off as you go, moving them to [done](#done). If anything is unclear, add questions for USER to answer in [Questions](#questions)
+> Do these in written order. Pull and make commit (don't push) before moving on to next task. Iterate until there are no tasks left. Check them off as you go, moving them to [done](#done). If anything is unclear, add questions for USER to answer in [Questions](#questions)
 
 ## Ready
 
 > These are ready for work, probably.
 
+- [ ] NPCs should have a billboard sprite appear above their head using the `unknown.png` texture. Allow this to be configured in the .ron file, along with other properties of aberrations.
 
 
 
@@ -21,6 +22,7 @@
 
 ## Done
 
+- [x] Recursive dialog tree from `assets/defs/dialog.ron` with Player response buttons, cursor management, hover effects
 - [x] Set the bevy `UiScale` to 2
 - [x] Layered sprite sheet aberrations defined by .ron files (BaseAnimAberrationSheet + GreenFace overlay)
 - [x] RPG-style dialog system with bevy_text_animation, embedded dialog_tree.ron, NPC interaction with E key
