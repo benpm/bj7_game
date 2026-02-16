@@ -50,6 +50,8 @@ struct DialogueNode {
     role: Role,
     text: String,
     responses: Vec<DialogueNode>,
+    #[serde(default)]
+    win: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -75,6 +77,8 @@ pub struct DialogState {
     dirty: bool,
     /// Whether response buttons are currently visible.
     responses_shown: bool,
+    /// The NPC entity this dialog is with.
+    npc_entity: Option<Entity>,
 }
 
 /// Run condition: returns true when no dialog is active.
@@ -82,9 +86,9 @@ pub fn dialog_not_active(state: Option<Res<DialogState>>) -> bool {
     state.is_none_or(|s| !s.active)
 }
 
-/// Tracks whether an NPC is within interaction range.
+/// Tracks the nearest NPC within interaction range.
 #[derive(Resource, Default)]
-struct NearbyNpc(bool);
+struct NearbyNpc(Option<Entity>);
 
 #[derive(Component)]
 struct DialogUi;
@@ -111,8 +115,7 @@ const RESPONSE_ANIM_SECS: f32 = 1.0;
 struct PromptUi;
 
 fn init_dialog(mut commands: Commands) {
-    let data: DialogueTrees =
-        ron::from_str(DIALOG_RON).expect("Failed to parse dialog.ron");
+    let data: DialogueTrees = ron::from_str(DIALOG_RON).expect("Failed to parse dialog.ron");
     commands.insert_resource(DialogTrees(data.0));
     commands.insert_resource(DialogState::default());
     commands.insert_resource(NearbyNpc::default());
@@ -120,26 +123,32 @@ fn init_dialog(mut commands: Commands) {
 
 fn check_npc_proximity(
     player_q: Query<&GlobalTransform, With<Player>>,
-    npc_q: Query<(&GlobalTransform, &Npc)>,
+    npc_q: Query<(Entity, &GlobalTransform, &Npc)>,
     mut nearby: ResMut<NearbyNpc>,
 ) {
     let Ok(player_tf) = player_q.single() else {
-        nearby.0 = false;
+        nearby.0 = None;
         return;
     };
 
     let player_pos = player_tf.translation();
     let found = npc_q
         .iter()
-        .any(|(tf, npc)| player_pos.distance(tf.translation()) <= npc.range);
+        .filter(|(_, tf, npc)| player_pos.distance(tf.translation()) <= npc.range)
+        .min_by(|(_, a, _), (_, b, _)| {
+            let da = player_pos.distance(a.translation());
+            let db = player_pos.distance(b.translation());
+            da.partial_cmp(&db).unwrap()
+        })
+        .map(|(entity, _, _)| entity);
 
-    if nearby.0 != found {
-        nearby.0 = found;
-    }
+    nearby.0 = found;
 }
 
 fn handle_dialog_input(
+    mut commands: Commands,
     keyboard: Res<ButtonInput<KeyCode>>,
+    mouse: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<DialogState>,
     nearby: Res<NearbyNpc>,
     trees: Option<Res<DialogTrees>>,
@@ -147,11 +156,13 @@ fn handle_dialog_input(
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     let e_pressed = keyboard.just_pressed(KeyCode::KeyE);
+    let esc_pressed = keyboard.just_pressed(KeyCode::Escape);
     let space_pressed = keyboard.just_pressed(KeyCode::Space);
+    let left_click = mouse.just_pressed(MouseButton::Left);
 
     if !state.active {
         if e_pressed
-            && nearby.0
+            && nearby.0.is_some()
             && let Some(trees) = trees
             && !trees.0.is_empty()
         {
@@ -162,6 +173,7 @@ fn handle_dialog_input(
             state.anim_done = false;
             state.dirty = true;
             state.responses_shown = false;
+            state.npc_entity = nearby.0;
             // Show cursor for dialog interaction
             if let Ok(mut cursor) = cursor_q.single_mut() {
                 cursor.grab_mode = CursorGrabMode::None;
@@ -171,12 +183,29 @@ fn handle_dialog_input(
         return;
     }
 
-    // Don't handle keyboard when response buttons are showing
+    // Escape or E always closes dialog
+    if esc_pressed || e_pressed {
+        close_dialog(&mut commands, &mut state, &mut cursor_q);
+        return;
+    }
+
+    // Left click closes dialog when no responses are available
+    let has_responses = state
+        .current_node
+        .as_ref()
+        .is_some_and(|n| n.responses.iter().any(|r| r.role == Role::Player));
+
+    if left_click && state.anim_done && !has_responses {
+        close_dialog(&mut commands, &mut state, &mut cursor_q);
+        return;
+    }
+
+    // Don't handle Space when response buttons are showing
     if state.responses_shown {
         return;
     }
 
-    if !e_pressed && !space_pressed {
+    if !space_pressed {
         return;
     }
 
@@ -189,22 +218,13 @@ fn handle_dialog_input(
         }
         state.anim_done = true;
         state.dirty = true;
-    } else {
-        // Anim done, no responses shown yet — check if there are responses
-        let has_responses = state
-            .current_node
-            .as_ref()
-            .is_some_and(|n| !n.responses.is_empty());
-
-        if !has_responses {
-            // End dialog
-            close_dialog(&mut state, &mut cursor_q);
-        }
-        // else: responses will be shown by manage_dialog_ui
+    } else if !has_responses {
+        close_dialog(&mut commands, &mut state, &mut cursor_q);
     }
 }
 
 fn handle_response_click(
+    mut commands: Commands,
     mut state: ResMut<DialogState>,
     interaction_q: Query<(&Interaction, &ResponseButton), Changed<Interaction>>,
     mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
@@ -234,19 +254,32 @@ fn handle_response_click(
             state.responses_shown = false;
         } else {
             // No further dialog — end
-            close_dialog(&mut state, &mut cursor_q);
+            close_dialog(&mut commands, &mut state, &mut cursor_q);
         }
     }
 }
 
 fn close_dialog(
+    commands: &mut Commands,
     state: &mut ResMut<DialogState>,
     cursor_q: &mut Query<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
+    // Check win condition before clearing state
+    let win = state
+        .current_node
+        .as_ref()
+        .is_some_and(|n| n.win);
+    if win {
+        if let Some(npc_entity) = state.npc_entity {
+            commands.entity(npc_entity).despawn();
+        }
+    }
+
     state.active = false;
     state.current_node = None;
     state.dirty = true;
     state.responses_shown = false;
+    state.npc_entity = None;
     // Re-lock cursor
     if let Ok(mut cursor) = cursor_q.single_mut() {
         cursor.grab_mode = CursorGrabMode::Locked;
@@ -317,54 +350,49 @@ fn manage_dialog_ui(
         let textbox = textures.textbox.clone();
 
         for (container_entity, _) in &response_container_q {
-            commands
-                .entity(container_entity)
-                .with_children(|parent| {
-                    for (original_idx, text) in &player_responses {
-                        parent
-                            .spawn((
-                                Button,
-                                Node {
-                                    padding: UiRect::new(
-                                        Val::Px(16.0),
-                                        Val::Px(16.0),
-                                        Val::Px(8.0),
-                                        Val::Px(8.0),
-                                    ),
-                                    height: Val::Px(0.0),
-                                    overflow: Overflow::clip(),
-                                    ..default()
-                                },
-                                ImageNode {
-                                    image: textbox.clone(),
-                                    image_mode: NodeImageMode::Sliced(TextureSlicer {
-                                        border: BorderRect::all(16.0),
-                                        center_scale_mode: SliceScaleMode::Stretch,
-                                        sides_scale_mode: SliceScaleMode::Stretch,
-                                        max_corner_scale: 1.0,
-                                    }),
-                                    ..default()
-                                },
-                                ResponseButton(*original_idx),
-                                ResponseButtonAnim {
-                                    timer: Timer::from_seconds(
-                                        RESPONSE_ANIM_SECS,
-                                        TimerMode::Once,
-                                    ),
-                                },
-                            ))
-                            .with_child((
-                                Text::new(text),
-                                TextFont {
-                                    font: font.clone(),
-                                    font_size: 32.0,
-                                    font_smoothing: FontSmoothing::None,
-                                    ..default()
-                                },
-                                TextColor(Color::WHITE),
-                            ));
-                    }
-                });
+            commands.entity(container_entity).with_children(|parent| {
+                for (original_idx, text) in &player_responses {
+                    parent
+                        .spawn((
+                            Button,
+                            Node {
+                                padding: UiRect::new(
+                                    Val::Px(16.0),
+                                    Val::Px(16.0),
+                                    Val::Px(8.0),
+                                    Val::Px(8.0),
+                                ),
+                                height: Val::Px(0.0),
+                                overflow: Overflow::clip(),
+                                ..default()
+                            },
+                            ImageNode {
+                                image: textbox.clone(),
+                                image_mode: NodeImageMode::Sliced(TextureSlicer {
+                                    border: BorderRect::all(16.0),
+                                    center_scale_mode: SliceScaleMode::Stretch,
+                                    sides_scale_mode: SliceScaleMode::Stretch,
+                                    max_corner_scale: 1.0,
+                                }),
+                                ..default()
+                            },
+                            ResponseButton(*original_idx),
+                            ResponseButtonAnim {
+                                timer: Timer::from_seconds(RESPONSE_ANIM_SECS, TimerMode::Once),
+                            },
+                        ))
+                        .with_child((
+                            Text::new(text),
+                            TextFont {
+                                font: font.clone(),
+                                font_size: 32.0,
+                                font_smoothing: FontSmoothing::None,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                }
+            });
         }
     } else if !state.anim_done {
         // New NPC line — update text and clear response buttons
@@ -519,7 +547,7 @@ fn manage_prompt_ui(
     prompt_q: Query<Entity, With<PromptUi>>,
     fonts: Res<FontAssets>,
 ) {
-    let should_show = nearby.0 && !state.active;
+    let should_show = nearby.0.is_some() && !state.active;
 
     if should_show && prompt_q.is_empty() {
         commands.spawn((
