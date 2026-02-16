@@ -17,6 +17,8 @@ const SPAWN_MAX_DIST: f32 = 18.0;
 const SPAWN_HALF_ANGLE: f32 = std::f32::consts::FRAC_PI_4; // ±45° from look dir
 const SPAWN_ANIM_SECS: f32 = 0.5;
 const SENSITIVITY_DURING_SPAWN: f32 = 0.15; // multiplied onto normal sensitivity
+const DISTANCE_SCALE_NEAR: f32 = 5.0;
+const DISTANCE_SCALE_FAR: f32 = 50.0;
 const KILL_COUNTDOWN_SECS: f32 = 5.0;
 const KILL_PROXIMITY: f32 = 3.0;
 const MAX_SHAKE_INTENSITY: f32 = 0.3;
@@ -33,6 +35,7 @@ impl Plugin for AberrationPlugin {
                 (
                     spawn_aberration_periodic,
                     aberration_face_player,
+                    aberration_distance_scale,
                     animate_spawn,
                     kill_countdown_proximity,
                     kill_countdown_tick,
@@ -322,6 +325,22 @@ fn kill_countdown_tick(
             next_state.set(GameState::Menu);
             return;
         }
+    }
+}
+
+fn aberration_distance_scale(
+    player_q: Query<&GlobalTransform, With<Player>>,
+    mut aberration_q: Query<(&GlobalTransform, &mut Transform), (With<Aberration>, Without<SpawnAnimation>)>,
+) {
+    let Ok(player_tf) = player_q.single() else {
+        return;
+    };
+    let player_pos = player_tf.translation();
+
+    for (global_tf, mut transform) in &mut aberration_q {
+        let dist = player_pos.distance(global_tf.translation());
+        let t = 1.0 - ((dist - DISTANCE_SCALE_NEAR) / (DISTANCE_SCALE_FAR - DISTANCE_SCALE_NEAR)).clamp(0.0, 1.0);
+        transform.scale = Vec3::splat(t);
     }
 }
 
