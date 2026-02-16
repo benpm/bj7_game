@@ -24,10 +24,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@master
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: stable
           targets: wasm32-unknown-unknown
 
       - uses: actions/cache@v4
@@ -40,45 +39,25 @@ jobs:
             target/
           key: wasm-cargo-${{ hashFiles('**/Cargo.toml') }}
 
-      - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev libxkbcommon-dev
+      - name: Install build dependencies
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
 
-      - name: Build web release
-        run: cargo build --profile web-release --target wasm32-unknown-unknown --no-default-features
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
 
-      - name: Generate wasm bindings
-        run: wasm-bindgen --out-dir dist --target web target/wasm32-unknown-unknown/web-release/${{ env.GAME_EXECUTABLE_NAME }}.wasm
+      - name: Install Bevy CLI and tools
+        run: |
+          cargo binstall --version 0.1.0-alpha.2 --locked --no-confirm --force --git='https://github.com/TheBevyFlock/bevy_cli' bevy_cli
+          cargo binstall --locked --no-confirm --force wasm-bindgen-cli
+          cargo binstall --locked --no-confirm --force wasm-opt
 
-      - name: Copy assets
-        run: cp -r assets dist/assets
+      - name: Build web bundle
+        run: bevy build --release --yes web --bundle
 
       - name: Optimize wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:
-          file: dist/*.wasm
-
-      - name: Create index.html
-        run: |
-          cat > dist/index.html << 'HTMLEOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>BJ7</title>
-              <style>
-                  body { margin: 0; background: #000; overflow: hidden; }
-                  canvas { display: block; width: 100vw; height: 100vh; }
-              </style>
-          </head>
-          <body>
-              <script type="module">
-                  import init from './bevy_game.js';
-                  init();
-              </script>
-          </body>
-          </html>
-          HTMLEOF
+          file: target/bevy_web/web-release/${{ env.GAME_EXECUTABLE_NAME }}/*.wasm
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -86,7 +65,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: target/bevy_web/web-release/${{ env.GAME_EXECUTABLE_NAME }}
 
   deploy:
     needs: build-web

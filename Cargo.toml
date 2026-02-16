@@ -1,5 +1,5 @@
 [package]
-name = "bevy_game" # ToDo
+name = "bevy_game"                                  # ToDo
 version = "0.1.0"
 publish = false
 authors = ["Benjamin Mastripolito <ben_jpm@pm.me>"]
@@ -64,15 +64,17 @@ webbrowser = { version = "1.1.0", features = ["hardened"] }
 winit = { version = "0.30", default-features = false }
 image = { version = "0.25", default-features = false }
 ## This greatly improves WGPU's performance due to its heavy use of trace! calls
-log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
+log = { version = "0.4", features = [
+    "max_level_debug",
+    "release_max_level_warn",
+] }
 
 [build-dependencies]
 embed-resource = "1"
 
 # Enable the `getrandom` web backend
-[target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))' .dependencies]
+[target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
 getrandom = { version = "^0.3", features = ["wasm_js"] }
-
 
 
 [package.metadata.bevy_cli.release]
