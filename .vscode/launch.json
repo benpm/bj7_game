@@ -11,7 +11,7 @@
             "cwd"     : "${workspaceFolder}",
             "name"    : "Debug",
             "cargo"   : {
-                "args"  : ["run", "--bin=bevy_game", "--package=bevy_game", "--features=dev"],
+                "args"  : ["run", "--bin=bevy_game", "--package=bevy_game"],
                 "filter": {"name": "bevy_game", "kind": "bin"}
             },
             "terminal": "integrated",

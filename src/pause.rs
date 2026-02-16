@@ -3,6 +3,7 @@ use crate::environment::{Environment, RunTimer};
 use crate::health::Health;
 use crate::loading::FontAssets;
 use bevy::prelude::*;
+use bevy::text::FontSmoothing;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
 pub struct PausePlugin;
@@ -105,7 +106,8 @@ fn manage_pause_menu(
                     Text::new("PAUSED"),
                     TextFont {
                         font: font.clone(),
-                        font_size: 48.0,
+                        font_size: 64.0,
+                        font_smoothing: FontSmoothing::None,
                         ..default()
                     },
                     TextColor(Color::WHITE),
@@ -124,7 +126,8 @@ fn manage_pause_menu(
                     Text::new(stats),
                     TextFont {
                         font: font.clone(),
-                        font_size: 24.0,
+                        font_size: 16.0,
+                        font_smoothing: FontSmoothing::None,
                         ..default()
                     },
                     TextColor(Color::srgba(0.8, 0.8, 0.8, 1.0)),
@@ -155,6 +158,7 @@ fn manage_pause_menu(
                         TextFont {
                             font: font.clone(),
                             font_size: 32.0,
+                            font_smoothing: FontSmoothing::None,
                             ..default()
                         },
                         TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
@@ -179,6 +183,7 @@ fn manage_pause_menu(
                         TextFont {
                             font: font.clone(),
                             font_size: 32.0,
+                            font_smoothing: FontSmoothing::None,
                             ..default()
                         },
                         TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),

@@ -1,4 +1,5 @@
 use bevy::core_pipeline::FullscreenShader;
+use bevy::core_pipeline::core_2d::graph::{Core2d, Node2d};
 use bevy::core_pipeline::core_3d::graph::{Core3d, Node3d};
 use bevy::ui_render::graph::NodeUi;
 use bevy::ecs::query::QueryItem;
@@ -52,6 +53,18 @@ impl Plugin for PalettePlugin {
                     NodeUi::UiPass,
                     PaletteSqueezeLabel,
                     Node3d::Upscaling,
+                ),
+            )
+            .add_render_graph_node::<ViewNodeRunner<PaletteSqueezeNode>>(
+                Core2d,
+                PaletteSqueezeLabel,
+            )
+            .add_render_graph_edges(
+                Core2d,
+                (
+                    NodeUi::UiPass,
+                    PaletteSqueezeLabel,
+                    Node2d::Upscaling,
                 ),
             );
     }

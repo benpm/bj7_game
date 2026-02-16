@@ -1,0 +1,108 @@
+(
+    trees: [
+        // Tree 1
+        (
+            text: "H-- l*** **ve yOu be#n h##*? (flickering?)\n\nHow long have you been here?",
+            children: [
+                (
+                    text: "I think I never left.",
+                    color: Some(4),
+                    children: [
+                        (
+                            text: "Why did you stay?",
+                            children: [
+                                (text: "Why did you?", color: Some(1)),
+                                (text: "...", color: Some(4)),
+                            ],
+                        ),
+                    ],
+                ),
+                (text: "Where is here?", color: Some(1)),
+            ],
+        ),
+
+        // Tree 2
+        (
+            text: "I think I understand.",
+            children: [
+                (
+                    text: "What do you understand?",
+                    color: Some(4),
+                    children: [
+                        (
+                            text: "That there's nothing to understand. Do you understand?",
+                            children: [
+                                (
+                                    text: "Of course not.",
+                                    color: Some(4),
+                                    children: [
+                                        (text: "Of course not."),
+                                    ],
+                                ),
+                                (
+                                    text: "Of course.",
+                                    color: Some(1),
+                                    children: [
+                                        (text: "No. You could not."),
+                                    ],
+                                ),
+                                (text: "...", color: Some(4)),
+                            ],
+                        ),
+                    ],
+                ),
+                (
+                    text: "Are you sure?",
+                    color: Some(1),
+                    children: [
+                        (text: "Yes."),
+                    ],
+                ),
+            ],
+        ),
+
+        // Tree 3
+        (
+            text: "Do we know each other?",
+            children: [
+                (
+                    text: "Not like we know ourselves.",
+                    color: Some(4),
+                    children: [
+                        (
+                            text: "Do you see me?",
+                            children: [
+                                (
+                                    text: "Yes.",
+                                    color: Some(4),
+                                    children: [
+                                        (text: "Do you really? Do you really see me? Do you see me? Do you really see me?"),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                (
+                    text: "I don't know you. You might know me.",
+                    color: Some(4),
+                    children: [
+                        (
+                            text: "Do you see me?",
+                            children: [
+                                (
+                                    text: "Yes.",
+                                    color: Some(4),
+                                    children: [
+                                        (text: "Do you really? Do you really see me? Do you see me? Do you really see me?"),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                (text: "Maybe we all can get to know each other.", color: Some(1)),
+            ],
+        ),
+    ],
+)

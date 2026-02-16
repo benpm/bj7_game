@@ -2,6 +2,7 @@ use crate::GameState;
 use crate::aberration::Aberration;
 use crate::pause::game_not_paused;
 use crate::player::FpsCamera;
+use crate::scaling::CANVAS_SCALE;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
@@ -26,11 +27,16 @@ impl Plugin for DispelPlugin {
     }
 }
 
+/// How long the player must wait between adding points to the current polygon.
 const SEGMENT_INTERVAL: f32 = 0.05;
+/// Maximum distance from the starting point for the polygon to be considered closed (in viewport pixels).
 const CLOSURE_DISTANCE: f32 = 30.0;
+/// Minimum number of points required to attempt closure and dispel. This prevents accidental clicks from doing anything.
 const MIN_POINTS: usize = 10;
 /// How far in front of the camera to place gizmo points (world units).
 const GIZMO_DEPTH: f32 = 0.5;
+/// Minimum distance between points to add a new one, to prevent over-sampling when the player holds still.
+const MIN_POINT_DISTANCE: f32 = 5.0;
 
 #[derive(Resource)]
 pub struct DispelState {
@@ -111,6 +117,7 @@ fn dispel_draw(
     if state.segment_timer.just_finished()
         && let Ok(window) = window_q.single()
         && let Some(pos) = window.cursor_position()
+        && state.points.last().is_none_or(|last| pos.distance(*last) > MIN_POINT_DISTANCE)
     {
         state.points.push(pos);
     }
@@ -148,7 +155,7 @@ fn check_closure_and_dispel(
         for (entity, ab_transform) in &aberration_q {
             if let Ok(viewport_pos) =
                 camera.world_to_viewport(cam_transform, ab_transform.translation())
-                && point_in_polygon(viewport_pos, &state.points)
+                && point_in_polygon(viewport_pos * CANVAS_SCALE, &state.points)
             {
                 commands.entity(entity).despawn();
             }
@@ -182,9 +189,11 @@ fn deactivate_dispel(
     }
 }
 
-/// Project a viewport pixel coordinate to a 3D world point at GIZMO_DEPTH in front of the camera.
+/// Project a window pixel coordinate to a 3D world point at GIZMO_DEPTH in front of the camera.
+/// Scales from window coords to half-res viewport coords before projecting.
 fn viewport_to_world_point(camera: &Camera, cam_transform: &GlobalTransform, px: Vec2) -> Option<Vec3> {
-    let ray = camera.viewport_to_world(cam_transform, px).ok()?;
+    let viewport_px = px / CANVAS_SCALE;
+    let ray = camera.viewport_to_world(cam_transform, viewport_px).ok()?;
     Some(ray.get_point(GIZMO_DEPTH))
 }
 

@@ -1,6 +1,9 @@
 use crate::GameState;
 use crate::loading::{FontAssets, TextureAssets};
+use crate::palette::PaletteSqueeze;
+use crate::scaling::CanvasImage;
 use bevy::prelude::*;
+use bevy::text::FontSmoothing;
 use bevy_svg::prelude::*;
 
 pub struct MenuPlugin;
@@ -38,19 +41,28 @@ fn setup_menu(
     textures: Res<TextureAssets>,
     fonts: Res<FontAssets>,
     asset_server: Res<AssetServer>,
+    canvas: Res<CanvasImage>,
 ) {
     let font = fonts.main.clone();
     info!("menu");
-    commands.spawn((Camera2d, Msaa::Off, Menu));
-
-    // SVG banner above menu buttons
-    let svg = asset_server.load("vector_sprites/creeper_A.svg");
     commands.spawn((
-        Svg2d(svg),
-        Origin::Center,
-        Transform::from_xyz(0.0, 150.0, 0.0).with_scale(Vec3::splat(0.5)),
+        Camera2d,
+        Camera {
+            order: -1,
+            ..default()
+        },
+        bevy::camera::RenderTarget::from(canvas.0.clone()),
+        Msaa::Off,
+        PaletteSqueeze::default(),
         Menu,
     ));
+
+    let textfont = TextFont {
+        font: font.clone(),
+        font_size: 32.0,
+        font_smoothing: FontSmoothing::None,
+        ..default()
+    };
 
     commands
         .spawn((
@@ -82,11 +94,7 @@ fn setup_menu(
                 ))
                 .with_child((
                     Text::new("Play"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 40.0,
-                        ..default()
-                    },
+                    textfont.clone(),
                     TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                 ));
             let button_colors = ButtonColors::default();
@@ -107,11 +115,7 @@ fn setup_menu(
                 ))
                 .with_child((
                     Text::new("Exit"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 40.0,
-                        ..default()
-                    },
+                    textfont.clone(),
                     TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                 ));
         });
@@ -150,11 +154,7 @@ fn setup_menu(
                 .with_children(|parent| {
                     parent.spawn((
                         Text::new("Made with Bevy"),
-                        TextFont {
-                            font: font.clone(),
-                            font_size: 15.0,
-                            ..default()
-                        },
+                        textfont.clone(),
                         TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                     ));
                     parent.spawn((
@@ -189,11 +189,7 @@ fn setup_menu(
                 .with_children(|parent| {
                     parent.spawn((
                         Text::new("Open source"),
-                        TextFont {
-                            font: font.clone(),
-                            font_size: 15.0,
-                            ..default()
-                        },
+                        textfont.clone(),
                         TextColor(Color::linear_rgb(0.9, 0.9, 0.9)),
                     ));
                     parent.spawn((

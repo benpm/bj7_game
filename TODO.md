@@ -6,7 +6,12 @@
 
 > These are ready for work, probably.
 
-
+- [ ] Add a point light source to the player
+- [ ] Use the 9-slice texture `textures/textbox9x9.png` for buttons. Also, create a modal / box for the UI elements in the pause menu.
+- [ ] Create a simple RPG-style dialog system. 
+  - Use `bevy_text_animation` to animate the text displayed on screen
+  - Embed the dialogs/dialog_tree.ron file using bevy asset embedding crate
+- [ ] `assets\textures\BaseAnimAberrationSheet.png` is a sprite sheet containing 3 cells, in a row. Instead of drawing the aberration as a single billboard
 
 
 

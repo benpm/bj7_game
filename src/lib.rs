@@ -11,6 +11,7 @@ mod menu;
 mod palette;
 mod pause;
 mod player;
+pub mod scaling;
 mod transition;
 mod world;
 
@@ -25,6 +26,7 @@ use crate::menu::MenuPlugin;
 use crate::palette::PalettePlugin;
 use crate::pause::PausePlugin;
 use crate::player::PlayerPlugin;
+use crate::scaling::ScalingPlugin;
 use crate::transition::TransitionPlugin;
 use crate::world::WorldPlugin;
 
@@ -57,6 +59,7 @@ impl Plugin for GamePlugin {
             PalettePlugin,
             PausePlugin,
             PlayerPlugin,
+            ScalingPlugin,
             TransitionPlugin,
             WorldPlugin,
         ));

@@ -5,6 +5,7 @@ use crate::actor::{Actor, ActorIntent, GROUND_Y};
 use crate::dispel::DispelState;
 use crate::palette::PaletteSqueeze;
 use crate::pause::game_not_paused;
+use crate::scaling::CanvasImage;
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
@@ -34,7 +35,7 @@ const PLAYER_HEIGHT: f32 = 1.7;
 const MOUSE_SENSITIVITY: f32 = 0.001;
 const MAX_PITCH: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_player(mut commands: Commands, canvas: Res<CanvasImage>) {
     commands
         .spawn((
             Transform::from_xyz(0.0, GROUND_Y + PLAYER_HEIGHT, 5.0),
@@ -52,6 +53,11 @@ fn spawn_player(mut commands: Commands) {
         .with_children(|parent| {
             parent.spawn((
                 Camera3d::default(),
+                Camera {
+                    order: -1,
+                    ..default()
+                },
+                bevy::camera::RenderTarget::from(canvas.0.clone()),
                 Transform::default(),
                 FpsCamera,
                 PaletteSqueeze::default(),

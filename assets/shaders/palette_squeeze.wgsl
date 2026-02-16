@@ -1,7 +1,7 @@
 #import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
 
 const DITHER: bool = true;
-const DOWN_SCALE: f32 = 2.0;
+const DOWN_SCALE: f32 = 1.0;
 const PALETTE_SIZE: i32 = 3;
 const HIGHLIGHT_SIZE: i32 = 5;
 const HIGHLIGHT_THRESHOLD: f32 = 0.15;

@@ -29,16 +29,6 @@ fn setup_world(
         WorldEntity,
     ));
 
-    // Directional light (sun)
-    commands.spawn((
-        AmbientLight {
-            brightness: 1.0,
-            color: Color::WHITE,
-            ..default()
-        },
-        WorldEntity,
-    ));
-
     // Spawn a 10x10 grid of tall, thin black cylinders
     for x in 0..10 {
         for z in 0..10 {
